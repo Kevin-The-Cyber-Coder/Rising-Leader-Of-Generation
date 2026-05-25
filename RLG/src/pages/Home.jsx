@@ -1,772 +1,542 @@
-/* Reset & Base Styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import Button from "../components/Button";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faGraduationCap, 
+  faGlobe, 
+  faUsers, 
+  faCalendarAlt,
+  faArrowRight,
+  faRocket,
+  faLightbulb,
+  faHandshake,
+  faChartLine,
+  faTrophy,
+  faHeart,
+  faStar,
+  faQuoteLeft,
+  faCheckCircle,
+  faVideo,
+  faClock,
+  faMapMarkerAlt,
+  faEnvelope,
+  faPhone,
+  faPlayCircle,
+  faUserGraduate,
+  faAward,
+  faTree,
+  faBookOpen,
+  faLaptopCode,
+  faComments,
+  faThumbsUp,
+  faNewspaper,
+  faBullhorn,
+  faUsers as faUsersIcon
+} from '@fortawesome/free-solid-svg-icons';
+import { showSuccess, showToast, showInfo } from "../utils/alert";
+import { 
+  heroBg, 
+  heroImage, 
+  patternBg, 
+  dotsPattern,
+  programIcon1,
+  programIcon2,
+  programIcon3,
+  testimonial1,
+  testimonial2,
+  testimonial3 
+} from "../assets";
 
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Poppins', sans-serif;
-  line-height: 1.5;
-  color: #1e293b;
-  background-color: #FEFEFE;
-}
+const Home = () => {
+  const [currentTestimonial, setCurrentTestimonial] = useState(0);
+  const [counters, setCounters] = useState({
+    members: 0,
+    countries: 0,
+    mentors: 0,
+    events: 0
+  });
 
-/* Color Variables - Exact Specifications */
-:root {
-  /* Primary Colors - Exact HEX/RGB */
-  --primary-dark-blue: #013464;
-  --primary-dark-blue-rgb: 1, 52, 100;
-  
-  --primary-green: #028702;
-  --primary-green-rgb: 2, 135, 2;
-  
-  --primary-white: #FEFEFE;
-  --primary-white-rgb: 254, 254, 254;
-  
-  /* Secondary Color */
-  --secondary-blue: #3c83f6;
-  --secondary-blue-rgb: 60, 131, 246;
-  
-  /* Gradients */
-  --gradient-primary: linear-gradient(135deg, #013464 0%, #028702 100%);
-  --gradient-secondary: linear-gradient(135deg, #028702 0%, #3c83f6 100%);
-  --gradient-blue: linear-gradient(135deg, #013464 0%, #3c83f6 100%);
-  --gradient-green: linear-gradient(135deg, #028702 0%, #3c83f6 50%, #013464 100%);
-  
-  /* UI Colors */
-  --success: #028702;
-  --warning: #3c83f6;
-  --info: #013464;
-  --error: #dc2626;
-  
-  /* Shadows with brand colors */
-  --shadow-blue: 0 4px 14px 0 rgba(1, 52, 100, 0.15);
-  --shadow-green: 0 4px 14px 0 rgba(2, 135, 2, 0.15);
-  --shadow-secondary: 0 4px 14px 0 #0a61ed97;
-}
+  // Counter animation
+  useEffect(() => {
+    const targets = { members: 100, countries: 3, mentors: 20, events: 10 };
+    const duration = 5000;
+    const step = 20;
+    const increment = {
+      members: targets.members / (duration / step),
+      countries: targets.countries / (duration / step),
+      mentors: targets.mentors / (duration / step),
+      events: targets.events / (duration / step)
+    };
+    
+    let current = { members: 0, countries: 0, mentors: 0, events: 0 };
+    const timer = setInterval(() => {
+      current.members = Math.min(current.members + increment.members, targets.members);
+      current.countries = Math.min(current.countries + increment.countries, targets.countries);
+      current.mentors = Math.min(current.mentors + increment.mentors, targets.mentors);
+      current.events = Math.min(current.events + increment.events, targets.events);
+      setCounters({ ...current });
+      
+      if (current.members >= targets.members) clearInterval(timer);
+    }, step);
+    
+    return () => clearInterval(timer);
+  }, []);
 
-/* Container */
-.container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 1rem;
-}
+  // Auto-rotate testimonials
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
-@media (min-width: 640px) {
-  .container {
-    padding: 0 1.5rem;
+  const handleJoinNewsletter = () => {
+    showSuccess("Subscribed! 🎉", "Thank you for joining our newsletter. You'll receive updates about leadership programs and events!");
+  };
+
+  const handleWatchVideo = () => {
+    showInfo("Watch Our Story", "Check out our video to learn how RLG is transforming young leaders worldwide!");
+  };
+
+  const handleApplyNow = () => {
+    showToast("Applications are now open! Apply today to join our next cohort.", "success");
+  };
+
+  const testimonials = [
+    {
+      name: "Sarah Johnson",
+      role: "RLG Alumni 2024",
+      text: "RLG transformed my leadership journey. The mentorship I received helped me launch my own non-profit organization!",
+      rating: 5,
+      image: testimonial1,
+      initials: "SJ"
+    },
+    {
+      name: "Michael Chen",
+      role: "Current Fellow",
+      text: "The global network and resources provided by RLG are unmatched. I've connected with mentors from top companies worldwide.",
+      rating: 5,
+      image: testimonial2,
+      initials: "MC"
+    },
+    {
+      name: "Dr. Amina Patel",
+      role: "Lead Mentor",
+      text: "Working with RLG fellows has been incredibly rewarding. These young leaders are truly shaping our future.",
+      rating: 5,
+      image: testimonial3,
+      initials: "AP"
+    }
+  ];
+
+  const upcomingEvents = [
+    { title: "Leadership Summit 2025", date: "June 15, 2025", time: "9:00 AM - 6:00 PM", location: "Virtual + NYC", spots: 150 },
+    { title: "Design Thinking Workshop", date: "July 5, 2025", time: "2:00 PM - 5:00 PM", location: "Online", spots: 50 },
+    { title: "Networking Gala", date: "August 20, 2025", time: "6:00 PM - 9:00 PM", location: "New York", spots: 200 }
+  ];
+
+  const partners = [
+    "Google", "Microsoft", "UN Foundation", "Harvard", "MIT", "World Bank"
+  ];
+
+  return (
+    <div className="pt-16">
+      {/* Hero Section with Background Image */}
+      <section 
+        className="hero"
+        style={{
+          backgroundImage: `linear-gradient(135deg, hsla(132, 56%, 2%, 0.95), rgba(2,135,2,0.9)), url(${heroBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed'
+        }}
+      >
+        <div className="container text-center py-20">
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-10">
+              
+           
+            </div>
+            
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in">
+              Lead and Empower For Change
+            
+            </h1>
+            
+            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto opacity-90 animate-slide-left">
+              Empowering the next generation of visionary leaders to create lasting impact 
+              in their communities and beyond. Join 100+ young leaders in Rwanda.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-right">
+              <button onClick={handleApplyNow}>
+                <Button variant="primary" size="lg" icon={faRocket}>
+                  Apply Now
+                </Button>
+              </button>
+              <button onClick={handleWatchVideo}>
+                <Button variant="outline" size="lg" icon={faPlayCircle}>
+                  Watch Video
+                </Button>
+              </button>
+            </div>
+            
+            {/* Hero Image */}
+            <div className="mt-12">
+              <img 
+                src={heroImage} 
+                alt="Young Leaders" 
+                className="mx-auto rounded-2xl shadow-2xl max-w-full h-auto"
+                style={{ maxHeight: '400px' }}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section with Icons */}
+      <section className="py-16 bg-white">
+        <div className="container">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="stat-card">
+              <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                <FontAwesomeIcon icon={faUsers} className="text-white text-2xl" />
+              </div>
+              <div className="stat-number">{Math.floor(counters.members)}+</div>
+              <div className="text-gray-600 mt-2">Active Members</div>
+              <div className="text-sm text-green mt-1">↑ 45% this year</div>
+            </div>
+            
+            <div className="stat-card">
+              <div className="w-16 h-16 bg-gradient-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+                <FontAwesomeIcon icon={faGlobe} className="text-white text-2xl" />
+              </div>
+              <div className="stat-number">{Math.floor(counters.countries)}+</div>
+              <div className="text-gray-600 mt-2">Countries</div>
+              <div className="text-sm text-green mt-1">6 continents</div>
+            </div>
+            
+            <div className="stat-card">
+              <div className="w-16 h-16 bg-gradient-blue rounded-full flex items-center justify-center mx-auto mb-4">
+                <FontAwesomeIcon icon={faGraduationCap} className="text-white text-2xl" />
+              </div>
+              <div className="stat-number">{Math.floor(counters.mentors)}+</div>
+              <div className="text-gray-600 mt-2">Expert Mentors</div>
+              <div className="text-sm text-green mt-1">Top industry leaders</div>
+            </div>
+            
+            <div className="stat-card">
+              <div className="w-16 h-16 bg-gradient-green rounded-full flex items-center justify-center mx-auto mb-4">
+                <FontAwesomeIcon icon={faCalendarAlt} className="text-white text-2xl" />
+              </div>
+              <div className="stat-number">{Math.floor(counters.events)}+</div>
+              <div className="text-gray-600 mt-2">Events Yearly</div>
+              <div className="text-sm text-green mt-1">100+ workshops</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section with Program Icons */}
+      <section className="py-20 bg-gray-50">
+        <div className="container">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-green-light bg-opacity-20 rounded-full px-4 py-2 mb-4">
+              <FontAwesomeIcon icon={faStar} className="text-green" />
+              <span className="text-green text-sm font-semibold">Why Choose RLG</span>
+            </div>
+            <h2 className="text-4xl font-bold mb-4">Transform Your Leadership Journey</h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              We provide everything you need to grow as a leader and make a real impact.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <div key={index} className="card p-8 text-center group hover:shadow-xl transition">
+                <img 
+                  src={feature.icon} 
+                  alt={feature.title}
+                  className="w-20 h-20 mx-auto mb-4 object-contain group-hover:scale-110 transition"
+                />
+                <h3 className="text-2xl font-semibold mb-3">{feature.title}</h3>
+                <p className="text-gray-600 mb-4">{feature.description}</p>
+                <ul className="text-left space-y-2">
+                  {feature.points.map((point, i) => (
+                    <li key={i} className="flex items-center gap-2 text-sm text-gray-600">
+                      <FontAwesomeIcon icon={faCheckCircle} className="text-green text-xs" />
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section with Images */}
+      <section className="py-20 bg-gradient-primary text-white">
+        <div className="container">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-white bg-opacity-20 rounded-full px-4 py-2 mb-4">
+              <FontAwesomeIcon icon={faComments} className="text-white" />
+              <span className="text-white text-sm">Success Stories</span>
+            </div>
+            <h2 className="text-4xl font-bold mb-4">What Our Community Says</h2>
+            <p className="text-xl opacity-90 max-w-2xl mx-auto">
+              Hear from young leaders who transformed their lives through RLG
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto">
+            <div className="testimonial-card bg-white text-gray-900 p-8 rounded-2xl shadow-xl">
+              <FontAwesomeIcon icon={faQuoteLeft} size="3x" className="text-green-light mb-4 opacity-50" />
+              <p className="text-xl mb-6 leading-relaxed">{testimonials[currentTestimonial].text}</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <img 
+                    src={testimonials[currentTestimonial].image} 
+                    alt={testimonials[currentTestimonial].name}
+                    className="w-16 h-16 rounded-full object-cover"
+                  />
+                  <div>
+                    <h4 className="font-bold text-lg">{testimonials[currentTestimonial].name}</h4>
+                    <p className="text-gray-600">{testimonials[currentTestimonial].role}</p>
+                    <div className="flex gap-1 mt-1">
+                      {[...Array(testimonials[currentTestimonial].rating)].map((_, i) => (
+                        <FontAwesomeIcon key={i} icon={faStar} className="text-yellow-400 text-sm" />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {testimonials.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentTestimonial(idx)}
+                      className={`w-2 h-2 rounded-full transition ${
+                        idx === currentTestimonial ? 'bg-green w-4' : 'bg-gray-300'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Upcoming Events Section */}
+      <section className="py-20 bg-white">
+        <div className="container">
+          <div className="flex justify-between items-center mb-12 flex-wrap gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-green-light bg-opacity-20 rounded-full px-4 py-2 mb-4">
+                <FontAwesomeIcon icon={faCalendarAlt} className="text-green" />
+                <span className="text-green text-sm font-semibold">Don't Miss Out</span>
+              </div>
+              <h2 className="text-4xl font-bold">Upcoming Events</h2>
+            </div>
+            <Link to="/events">
+              <Button variant="outline" icon={faArrowRight} iconPosition="right">
+                View All Events
+              </Button>
+            </Link>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {upcomingEvents.map((event, index) => (
+              <div key={index} className="event-card">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="bg-gradient-primary rounded-lg p-3">
+                    <FontAwesomeIcon icon={faCalendarAlt} className="text-white text-xl" />
+                  </div>
+                  <span className="badge badge-green">{event.spots} spots left</span>
+                </div>
+                <h3 className="text-xl font-bold mb-2">{event.title}</h3>
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <FontAwesomeIcon icon={faClock} className="text-green text-sm" />
+                    <span className="text-sm">{event.time}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <FontAwesomeIcon icon={faMapMarkerAlt} className="text-green text-sm" />
+                    <span className="text-sm">{event.location}</span>
+                  </div>
+                </div>
+                <button onClick={handleApplyNow} className="btn btn-secondary w-full">
+                  Register Now →
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Impact Metrics Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="container">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-green-light bg-opacity-20 rounded-full px-4 py-2 mb-4">
+                <FontAwesomeIcon icon={faTrophy} className="text-green" />
+                <span className="text-green text-sm font-semibold">Our Impact</span>
+              </div>
+              <h2 className="text-4xl font-bold mb-4">Making a Difference Worldwide</h2>
+              <p className="text-gray-600 mb-6">
+                Since 2020, RLG has been committed to developing the next generation of leaders 
+                who are creating positive change in their communities.
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="font-semibold">Community Projects Completed</span>
+                    <span className="text-green font-bold">150+</span>
+                  </div>
+                  <div className="progress-bar">
+                    <div className="progress-fill" style={{ width: '85%' }}></div>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="font-semibold">Mentorship Hours Provided</span>
+                    <span className="text-green font-bold">10,000+</span>
+                  </div>
+                  <div className="progress-bar">
+                    <div className="progress-fill" style={{ width: '90%' }}></div>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="font-semibold">Youth Employed/Placed</span>
+                    <span className="text-green font-bold">2,000+</span>
+                  </div>
+                  <div className="progress-bar">
+                    <div className="progress-fill" style={{ width: '75%' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="card p-6 text-center">
+                <FontAwesomeIcon icon={faTree} size="3x" className="text-green mb-3" />
+                <div className="stat-number">5,000+</div>
+                <p className="text-gray-600 text-sm">Trees Planted</p>
+              </div>
+              <div className="card p-6 text-center">
+                <FontAwesomeIcon icon={faBookOpen} size="3x" className="text-green mb-3" />
+                <div className="stat-number">50+</div>
+                <p className="text-gray-600 text-sm">Scholarships</p>
+              </div>
+              <div className="card p-6 text-center">
+                <FontAwesomeIcon icon={faLaptopCode} size="3x" className="text-green mb-3" />
+                <div className="stat-number">30+</div>
+                <p className="text-gray-600 text-sm">Tech Workshops</p>
+              </div>
+              <div className="card p-6 text-center">
+                <FontAwesomeIcon icon={faAward} size="3x" className="text-green mb-3" />
+                <div className="stat-number">25+</div>
+                <p className="text-gray-600 text-sm">Awards Won</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Partners Section */}
+      <section className="py-16 bg-white">
+        <div className="container">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-semibold mb-2">Trusted By Leading Organizations</h3>
+            <p className="text-gray-600">Join 100+ partners who believe in our mission</p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-8 items-center">
+            {partners.map((partner, index) => (
+              <div key={index} className="text-center">
+                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <FontAwesomeIcon icon={faHandshake} className="text-gray-400 text-3xl" />
+                </div>
+                <span className="text-sm text-gray-600">{partner}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Newsletter & CTA Section */}
+      <section className="py-20">
+        <div className="container">
+          <div className="newsletter text-center">
+            <FontAwesomeIcon icon={faEnvelope} size="3x" className="mb-4" />
+            <h3 className="text-3xl font-bold mb-4">Stay Updated with RLG</h3>
+            <p className="text-lg mb-6 opacity-90 max-w-2xl mx-auto">
+              Subscribe to our newsletter for leadership tips, event announcements, and success stories.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+              <input 
+                type="email" 
+                placeholder="Enter your email address"
+                className="bg-white text-gray-900"
+              />
+              <button onClick={handleJoinNewsletter} className="btn btn-primary">
+                Subscribe Now
+                <FontAwesomeIcon icon={faArrowRight} className="ml-2" />
+              </button>
+            </div>
+            <p className="text-sm mt-4 opacity-75">
+              <FontAwesomeIcon icon={faHeart} className="mr-1" />
+              No spam, unsubscribe anytime
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-primary text-white">
+        <div className="container text-center">
+          <h2 className="text-4xl font-bold mb-4">Ready to Start Your Leadership Journey?</h2>
+          <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
+            Join thousands of young leaders who are making a difference around the world.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button onClick={handleApplyNow}>
+              <Button variant="outline" size="lg" icon={faRocket}>
+                Apply for Programs
+              </Button>
+            </button>
+            <Link to="/contact">
+              <Button variant="secondary" size="lg" icon={faComments}>
+                Talk to an Advisor
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const features = [
+  {
+    icon: programIcon1,
+    title: "World-Class Mentorship",
+    description: "Learn from industry leaders and experienced professionals who guide your growth journey.",
+    points: ["1-on-1 mentoring sessions", "Career guidance", "Networking opportunities", "Personalized feedback"]
+  },
+  {
+    icon: programIcon2,
+    title: "Global Community",
+    description: "Connect with like-minded peers from around the world and build lasting networks.",
+    points: ["50+ countries represented", "Cultural exchange programs", "Global conferences", "Online community platform"]
+  },
+  {
+    icon: programIcon3,
+    title: "Real Projects",
+    description: "Work on impactful initiatives that create tangible change in communities.",
+    points: ["Social impact projects", "Leadership portfolios", "Funding opportunities", "Recognition awards"]
   }
-}
+];
 
-@media (min-width: 1024px) {
-  .container {
-    padding: 0 2rem;
-  }
-}
-
-/* Typography */
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-h1 {
-  font-size: 3rem;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-h2 {
-  font-size: 2.5rem;
-  color: var(--primary-dark-blue);
-}
-
-h3 {
-  font-size: 1.75rem;
-  color: var(--primary-green);
-}
-
-@media (min-width: 768px) {
-  h1 {
-    font-size: 4rem;
-  }
-  h2 {
-    font-size: 3rem;
-  }
-}
-
-/* Text Colors */
-.text-white { color: var(--primary-white); }
-.text-primary-blue { color: var(--primary-dark-blue); }
-.text-primary-green { color: var(--primary-green); }
-.text-secondary-blue { color: var(--secondary-blue); }
-.text-gray { color: #4b5563; }
-.text-dark { color: #1f2937; }
-
-/* Background Colors */
-.bg-white { background-color: var(--primary-white); }
-.bg-primary-blue { background-color: var(--primary-dark-blue); }
-.bg-primary-green { background-color: var(--primary-green); }
-.bg-secondary-blue { background-color: var(--secondary-blue); }
-.bg-gray-50 { background-color: #f9fafb; }
-.bg-gray-100 { background-color: #f3f4f6; }
-
-/* Gradients */
-.bg-gradient-primary {
-  background: var(--gradient-primary);
-}
-
-.bg-gradient-secondary {
-  background: var(--gradient-secondary);
-}
-
-.bg-gradient-blue {
-  background: var(--gradient-blue);
-}
-
-.bg-gradient-green {
-  background: var(--gradient-green);
-}
-
-/* Font Weights */
-.font-light { font-weight: 300; }
-.font-normal { font-weight: 400; }
-.font-medium { font-weight: 500; }
-.font-semibold { font-weight: 600; }
-.font-bold { font-weight: 700; }
-
-/* Spacing Utilities */
-.p-1 { padding: 0.25rem; }
-.p-2 { padding: 0.5rem; }
-.p-3 { padding: 0.75rem; }
-.p-4 { padding: 1rem; }
-.p-5 { padding: 1.25rem; }
-.p-6 { padding: 1.5rem; }
-.p-8 { padding: 2rem; }
-.p-10 { padding: 2.5rem; }
-.p-12 { padding: 3rem; }
-
-.px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
-.px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
-.px-4 { padding-left: 1rem; padding-right: 1rem; }
-.px-5 { padding-left: 1.25rem; padding-right: 1.25rem; }
-.px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
-.px-8 { padding-left: 2rem; padding-right: 2rem; }
-
-.py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
-.py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-.py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
-.py-4 { padding-top: 1rem; padding-bottom: 1rem; }
-.py-5 { padding-top: 1.25rem; padding-bottom: 1.25rem; }
-.py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
-.py-8 { padding-top: 2rem; padding-bottom: 2rem; }
-.py-10 { padding-top: 2.5rem; padding-bottom: 2.5rem; }
-.py-12 { padding-top: 3rem; padding-bottom: 3rem; }
-.py-16 { padding-top: 4rem; padding-bottom: 4rem; }
-.py-20 { padding-top: 5rem; padding-bottom: 5rem; }
-.py-24 { padding-top: 6rem; padding-bottom: 6rem; }
-
-.pt-16 { padding-top: 4rem; }
-.pb-20 { padding-bottom: 5rem; }
-
-/* Margin Utilities */
-.m-0 { margin: 0; }
-.mx-auto { margin-left: auto; margin-right: auto; }
-
-.mt-1 { margin-top: 0.25rem; }
-.mt-2 { margin-top: 0.5rem; }
-.mt-3 { margin-top: 0.75rem; }
-.mt-4 { margin-top: 1rem; }
-.mt-5 { margin-top: 1.25rem; }
-.mt-6 { margin-top: 1.5rem; }
-.mt-8 { margin-top: 2rem; }
-.mt-10 { margin-top: 2.5rem; }
-.mt-12 { margin-top: 3rem; }
-.mt-16 { margin-top: 4rem; }
-
-.mb-1 { margin-bottom: 0.25rem; }
-.mb-2 { margin-bottom: 0.5rem; }
-.mb-3 { margin-bottom: 0.75rem; }
-.mb-4 { margin-bottom: 1rem; }
-.mb-5 { margin-bottom: 1.25rem; }
-.mb-6 { margin-bottom: 1.5rem; }
-.mb-8 { margin-bottom: 2rem; }
-.mb-10 { margin-bottom: 2.5rem; }
-.mb-12 { margin-bottom: 3rem; }
-.mb-16 { margin-bottom: 4rem; }
-
-/* Flexbox */
-.flex { display: flex; }
-.inline-flex { display: inline-flex; }
-.flex-col { flex-direction: column; }
-.flex-row { flex-direction: row; }
-.flex-wrap { flex-wrap: wrap; }
-.flex-nowrap { flex-wrap: nowrap; }
-
-.items-center { align-items: center; }
-.items-start { align-items: flex-start; }
-.items-end { align-items: flex-end; }
-.items-stretch { align-items: stretch; }
-
-.justify-center { justify-content: center; }
-.justify-between { justify-content: space-between; }
-.justify-around { justify-content: space-around; }
-.justify-start { justify-content: flex-start; }
-.justify-end { justify-content: flex-end; }
-
-.gap-1 { gap: 0.25rem; }
-.gap-2 { gap: 0.5rem; }
-.gap-3 { gap: 0.75rem; }
-.gap-4 { gap: 1rem; }
-.gap-5 { gap: 1.25rem; }
-.gap-6 { gap: 1.5rem; }
-.gap-8 { gap: 2rem; }
-.gap-10 { gap: 2.5rem; }
-
-/* Grid */
-.grid { display: grid; }
-.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-
-/* Width & Height */
-.w-full { width: 100%; }
-.w-auto { width: auto; }
-.w-8 { width: 2rem; }
-.w-10 { width: 2.5rem; }
-.w-12 { width: 3rem; }
-.w-16 { width: 4rem; }
-.w-20 { width: 5rem; }
-.w-24 { width: 6rem; }
-.w-32 { width: 8rem; }
-.w-48 { width: 12rem; }
-.w-64 { width: 16rem; }
-
-.min-h-screen { min-height: 100vh; }
-.h-full { height: 100%; }
-.h-8 { height: 2rem; }
-.h-10 { height: 2.5rem; }
-.h-12 { height: 3rem; }
-.h-16 { height: 4rem; }
-.h-20 { height: 5rem; }
-.h-32 { height: 8rem; }
-.h-48 { height: 12rem; }
-.h-64 { height: 16rem; }
-
-/* Borders */
-.border { border: 1px solid #e5e7eb; }
-.border-2 { border-width: 2px; }
-.border-b { border-bottom: 1px solid #e5e7eb; }
-.border-t { border-top: 1px solid #e5e7eb; }
-
-.border-primary-blue { border-color: var(--primary-dark-blue); }
-.border-primary-green { border-color: var(--primary-green); }
-.border-secondary-blue { border-color: var(--secondary-blue); }
-
-.rounded { border-radius: 0.25rem; }
-.rounded-lg { border-radius: 0.5rem; }
-.rounded-xl { border-radius: 0.75rem; }
-.rounded-2xl { border-radius: 1rem; }
-.rounded-full { border-radius: 9999px; }
-
-/* Shadows */
-.shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
-.shadow { box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1); }
-.shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-.shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-.shadow-xl { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
-
-.shadow-blue { box-shadow: var(--shadow-blue); }
-.shadow-green { box-shadow: var(--shadow-green); }
-.shadow-secondary { box-shadow: var(--shadow-secondary); }
-
-/* Buttons */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.75rem 1.75rem;
-  font-weight: 600;
-  border-radius: 0.5rem;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  border: none;
-  font-size: 1rem;
-  text-decoration: none;
-  gap: 0.5rem;
-}
-
-.btn-primary {
-  background: var(--gradient-primary);
-  color: var(--primary-white);
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-blue);
-}
-
-.btn-secondary {
-  background: var(--gradient-secondary);
-  color: var(--primary-white);
-}
-
-.btn-secondary:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-green);
-}
-
-.btn-outline {
-  border: 2px solid var(--primary-dark-blue);
-  color: var(--primary-dark-blue);
-  background: transparent;
-}
-
-.btn-outline:hover {
-  background: var(--primary-dark-blue);
-  color: var(--primary-white);
-  transform: translateY(-2px);
-}
-
-.btn-green {
-  background: var(--primary-green);
-  color: var(--primary-white);
-}
-
-.btn-green:hover {
-  background: #016e01;
-  transform: translateY(-2px);
-}
-
-.btn-blue {
-  background: var(--primary-dark-blue);
-  color: var(--primary-white);
-}
-
-.btn-blue:hover {
-  background: #012a50;
-  transform: translateY(-2px);
-}
-
-.btn-gradient-blue {
-  background: var(--gradient-blue);
-  color: var(--primary-white);
-}
-
-.btn-gradient-blue:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-blue);
-}
-
-.btn-lg {
-  padding: 1rem 2rem;
-  font-size: 1.125rem;
-}
-
-.btn-sm {
-  padding: 0.5rem 1.25rem;
-  font-size: 0.875rem;
-}
-
-/* Cards */
-.card {
-  background: var(--primary-white);
-  border-radius: 1rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-blue);
-}
-
-.card-primary {
-  border-top: 4px solid var(--primary-dark-blue);
-}
-
-.card-green {
-  border-top: 4px solid var(--primary-green);
-}
-
-.card-secondary {
-  border-top: 4px solid var(--secondary-blue);
-}
-
-/* Hero Section */
-.hero {
-  background: var(--gradient-primary);
-  color: var(--primary-white);
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.hero::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Ccircle cx='50' cy='50' r='40' fill='rgba(255,255,255,0.05)'/%3E%3Ccircle cx='150' cy='120' r='60' fill='rgba(255,255,255,0.03)'/%3E%3Ccircle cx='100' cy='180' r='30' fill='rgba(255,255,255,0.04)'/%3E%3C/svg%3E");
-  opacity: 0.1;
-}
-
-.hero h1 {
-  background: linear-gradient(135deg, #3c83f6, #FEFEFE);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-/* Stats Section */
-.stat-card {
-  text-align: center;
-  padding: 1.5rem;
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-5px);
-}
-
-.stat-number {
-  font-size: 2.5rem;
-  font-weight: 700;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-@media (min-width: 768px) {
-  .stat-number {
-    font-size: 3rem;
-  }
-}
-
-/* Forms */
-input, textarea, select {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 0.5rem;
-  transition: all 0.3s ease;
-  font-size: 1rem;
-  background: var(--primary-white);
-}
-
-input:focus, textarea:focus, select:focus {
-  outline: none;
-  border-color: var(--primary-green);
-  box-shadow: 0 0 0 3px rgba(2, 135, 2, 0.1);
-}
-
-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: var(--primary-dark-blue);
-}
-
-/* Navbar */
-.navbar {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  background: var(--primary-white);
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  z-index: 50;
-  transition: all 0.3s ease;
-}
-
-.navbar-scrolled {
-  background: var(--primary-white);
-  box-shadow: 0 4px 6px -1px rgba(1, 52, 100, 0.1);
-}
-
-.nav-link {
-  color: #4b5563;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.3s ease;
-  position: relative;
-}
-
-.nav-link:hover {
-  color: var(--primary-green);
-}
-
-.nav-link.active {
-  color: var(--primary-dark-blue);
-  font-weight: 600;
-}
-
-.nav-link.active::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--gradient-primary);
-  border-radius: 2px;
-}
-
-/* Footer */
-.footer {
-  background: greenyellow;
-  color: var(--primary-white);
-  padding: 3rem 0 1.5rem;
-  background-color: greenyellow;
-}
-
-.footer-link {
-  color: #9ca3af;
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-
-.footer-link:hover {
-  color: var(--primary-green);
-}
-
-/* Badges */
-.badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.badge-primary {
-  background: rgba(1, 52, 100, 0.1);
-  color: var(--primary-dark-blue);
-}
-
-.badge-green {
-  background: rgba(2, 135, 2, 0.1);
-  color: var(--primary-green);
-}
-
-.badge-secondary {
-  background: rgba(60, 131, 246, 0.1);
-  color: var(--secondary-blue);
-}
-
-/* Progress Bar */
-.progress-bar {
-  height: 8px;
-  background: #e5e7eb;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: var(--gradient-primary);
-  border-radius: 4px;
-  transition: width 0.3s ease;
-}
-
-/* Responsive Design */
-@media (min-width: 768px) {
-  .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .md\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .md\:flex { display: flex; }
-  .md\:hidden { display: none; }
-  .md\:text-left { text-align: left; }
-}
-
-@media (min-width: 1024px) {
-  .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .lg\:flex { display: flex; }
-  .lg\:hidden { display: none; }
-}
-
-/* Animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.8s ease-out;
-}
-
-.animate-slide-left {
-  animation: slideInLeft 0.8s ease-out;
-}
-
-.animate-slide-right {
-  animation: slideInRight 0.8s ease-out;
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f3f4f6;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--gradient-primary);
-  border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--gradient-secondary);
-}
-
-/* Loading Spinner */
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #e5e7eb;
-  border-top-color: var(--primary-green);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-/* Testimonial Card */
-.testimonial-card {
-  background: var(--primary-white);
-  border-radius: 1rem;
-  padding: 2rem;
-  box-shadow: var(--shadow-md);
-  border-left: 4px solid var(--primary-green);
-}
-
-/* Newsletter Section */
-.newsletter {
-  background: var(--gradient-secondary);
-  color: var(--primary-white);
-  padding: 3rem;
-  border-radius: 1rem;
-}
-
-/* Team Member Card */
-.team-card {
-  text-align: center;
-  transition: all 0.3s ease;
-}
-
-.team-card:hover {
-  transform: translateY(-5px);
-}
-
-.team-avatar {
-  width: 120px;
-  height: 120px;
-  background: var(--gradient-primary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1rem;
-  color: var(--primary-white);
-  font-size: 2rem;
-  font-weight: bold;
-}
-
-/* Event Card */
-.event-card {
-  background: var(--primary-white);
-  border-radius: 1rem;
-  padding: 1.5rem;
-  box-shadow: var(--shadow);
-  transition: all 0.3s ease;
-  border: 1px solid #e5e7eb;
-}
-
-.event-card:hover {
-  box-shadow: var(--shadow-blue);
-  transform: translateX(5px);
-}
-
-/* Donation Card */
-.donation-card {
-  background: linear-gradient(135deg, var(--primary-white), #f9fafb);
-  border-radius: 1rem;
-  padding: 2rem;
-  text-align: center;
-  border: 2px solid rgba(2, 135, 2, 0.2);
-}
-
-/* Responsive Text */
-@media (max-width: 768px) {
-  h1 {
-    font-size: 2rem;
-  }
-  h2 {
-    font-size: 1.75rem;
-  }
-  h3 {
-    font-size: 1.25rem;
-  }
-}
+export default Home;
