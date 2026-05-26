@@ -28,13 +28,11 @@ import {
   faLaptopCode,
   faComments,
   faBullhorn,
-  faArrowLeft,
   faBuilding,
   faUserTie,
-  faSchool,
   faLeaf,
-  faTarget,
-  faEye
+  faEye,
+  faUsers as faUsersIcon
 } from '@fortawesome/free-solid-svg-icons';
 import { showSuccess, showToast, showInfo } from "../utils/alert";
 import { 
@@ -338,7 +336,7 @@ const Home = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="card p-6 text-center">
-                <FontAwesomeIcon icon={faTarget} size="3x" className="text-green mb-3" />
+                <FontAwesomeIcon icon={faBullhorn} size="3x" className="text-green mb-3" />
                 <h3 className="text-xl font-bold mb-2">Our Mission</h3>
                 <p className="text-gray-600 text-sm">Empower young leaders with skills, networks, and opportunities.</p>
               </div>
