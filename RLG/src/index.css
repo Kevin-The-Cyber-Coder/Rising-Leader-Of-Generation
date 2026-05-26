@@ -18,14 +18,14 @@ body {
   --primary-dark-blue: #013464;
   --primary-dark-blue-rgb: 1, 52, 100;
   
-  --primary-green: #028702;
+  --primary-green: hsl(120, 95%, 63%);
   --primary-green-rgb: 2, 135, 2;
   
   --primary-white: #FEFEFE;
   --primary-white-rgb: 254, 254, 254;
   
   /* Secondary Color */
-  --secondary-blue: #3c83f6;
+  --secondary-blue: hsl(217, 91%, 38%);
   --secondary-blue-rgb: 60, 131, 246;
   
   /* Gradients */
@@ -479,7 +479,8 @@ label {
 .navbar {
   position: fixed;
   top: 0;
-  width: 100%;
+  width: 220vh;
+  height: 15vh;
   background: var(--primary-white);
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
   z-index: 50;
