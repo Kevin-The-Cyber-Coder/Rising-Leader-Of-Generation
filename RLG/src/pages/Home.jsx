@@ -541,4 +541,3 @@ const features = [
 ];
 
 export default Home;
-git 
