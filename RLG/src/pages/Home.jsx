@@ -159,12 +159,12 @@ const Home = () => {
            
             </div>
             
-            <h1 className=" font-bold mb-6 animate-fade-in ">
+            <h1 className=" font-bold mb-10 animate-fade-in ">
               Lead and Empower For Change
             
             </h1>
             
-            <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto opacity-90 animate-slide-left">
+            <p className="text-xl md:text-2xl mb-10    animate-slide-left">
               Empowering the next generation of visionary leaders to create lasting impact 
               in their communities and beyond. Join 100+ young leaders in Rwanda.
             </p>
