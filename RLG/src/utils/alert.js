@@ -5,7 +5,7 @@ export const showSuccess = (title, message) => {
     title: title,
     text: message,
     icon: 'success',
-    confirmButtonColor: '#059669',
+    confirmButtonColor: 'rgb(6, 237, 164)',
     confirmButtonText: 'Great!',
     timer: 3000,
     showConfirmButton: true
@@ -17,7 +17,7 @@ export const showError = (title, message) => {
     title: title,
     text: message,
     icon: 'error',
-    confirmButtonColor: '#059669',
+    confirmButtonColor: 'rgb(14, 212, 150)',
     confirmButtonText: 'OK'
   });
 };
@@ -27,7 +27,7 @@ export const showWarning = (title, message) => {
     title: title,
     text: message,
     icon: 'warning',
-    confirmButtonColor: '#059669',
+    confirmButtonColor: 'rgb(16, 216, 153)',
     confirmButtonText: 'Got it'
   });
 };
@@ -37,7 +37,7 @@ export const showInfo = (title, message) => {
     title: title,
     text: message,
     icon: 'info',
-    confirmButtonColor: '#059669',
+    confirmButtonColor: 'rgb(6, 184, 128)',
     confirmButtonText: 'Thanks'
   });
 };
@@ -48,8 +48,8 @@ export const showConfirm = async (title, message) => {
     text: message,
     icon: 'question',
     showCancelButton: true,
-    confirmButtonColor: '#059669',
-    cancelButtonColor: '#dc2626',
+    confirmButtonColor: 'rgb(14, 215, 151)',
+    cancelButtonColor: 'red',
     confirmButtonText: 'Yes, proceed!',
     cancelButtonText: 'Cancel'
   });
