@@ -536,7 +536,7 @@ const features = [
     icon: programIcon3,
     title: "Real Projects",
     description: "Work on impactful initiatives that create tangible change in communities.",
-    points: ["Social impact projects", "Leadership portfolios", "Funding opportunities", "Recognition awards"]
+    points: ["Social impact rojects", "Leadership portfolios", "Funding opportunities", "Recognition awards"]
   }
 ];
 
