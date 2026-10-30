@@ -1,495 +1,828 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faImage, faVideo, faCalendarAlt, faCamera, faUsers,
-  faMicrophone, faLeaf, faAward, faComments, faTrophy,
-  faTree, faLightbulb, faPlayCircle, faPauseCircle,
-  faChevronLeft, faChevronRight, faTimes, faSpinner,
-  faShare, faDownload, faHeart, faEye, faTag, faClock,
-  faMapMarkerAlt, faUser, faThumbsUp, faComment,
-  faEnvelope
-} from "@fortawesome/free-solid-svg-icons";
-import Swal from "sweetalert2";
-import { heroBg } from "../assets";
 
-/* ─── SweetAlert2 helpers ─────────────────────────────────────── */
-const showInfo = (title, text) =>
-  Swal.fire({ icon: "info", title, text, confirmButtonColor: "#166534" });
-const showSuccess = (title, text) =>
-  Swal.fire({ icon: "success", title, text, confirmButtonColor: "#166534", timer: 3500, timerProgressBar: true });
-const showError = (title, text) =>
-  Swal.fire({ icon: "error", title, text, confirmButtonColor: "#166534" });
+// --- IMPORT LOCAL ASSETS ---
+import event1 from '../assets/event-1.jpg';
+import event2 from '../assets/event-2.jpg';
+import event3 from '../assets/event-3.jpg';
+import heroBg from '../assets/hero-bg.jpg';
+import heroImage from '../assets/hero-image.png';
+import hero from '../assets/hero.png';
+import aboutImage from '../assets/about-image.jpg';
+import dotsPattern from '../assets/dots-pattern.png';
+import footerLogo from '../assets/footer-logo.png';
+import logo from '../assets/logo.png';
+import patternBg from '../assets/pattern-bg.svg';
+import programIcon1 from '../assets/program-icon-1.png';
+import programIcon2 from '../assets/program-icon-2.png';
+import programIcon3 from '../assets/program-icon-3.png';
+import reactSvg from '../assets/react.svg';
 
-/* ─── API Service ─────────────────────────────────────────────── */
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-const api = {
-  getGallery: async () => {
-    try {
-      const response = await fetch(`${API_URL}/gallery`);
-      const data = await response.json();
-      return data.data || [];
-    } catch (error) {
-      console.error("Error fetching gallery:", error);
-      return [];
-    }
+/* ---------- Fallback gallery items (used if API fails) ---------- */
+const fallbackImages = [
+  {
+    _id: "g1",
+    title: "School Leadership Bootcamp",
+    category: "School Leadership Bootcamps",
+    date: "May 10, 2025",
+    location: "Kigali, Rwanda",
+    likes: 128,
+    views: 512,
+    // Changed to local image
+    image: event1,
   },
-  getVideoGallery: async () => {
-    try {
-      const response = await fetch(`${API_URL}/gallery/videos`);
-      const data = await response.json();
-      return data.data || [];
-    } catch (error) {
-      console.error("Error fetching videos:", error);
-      return [];
-    }
-  }
-};
+  {
+    _id: "g2",
+    title: "Light the Flame Debates",
+    category: "Light the Flame Debates",
+    date: "April 28, 2025",
+    location: "Kigali, Rwanda",
+    likes: 214,
+    views: 896,
+    // Changed to local image
+    image: event2,
+  },
+  {
+    _id: "g3",
+    title: "RLG Green Life Project",
+    category: "RLG Green Life",
+    date: "April 15, 2025",
+    location: "Kigali, Rwanda",
+    likes: 176,
+    views: 643,
+    // Changed to local image
+    image: event3,
+  },
+  {
+    _id: "g4",
+    title: "Leadership Forum Summit",
+    category: "Leadership Forums",
+    date: "March 30, 2025",
+    location: "Kigali, Rwanda",
+    likes: 302,
+    views: 1204,
+    // Changed to local image
+    image: heroBg,
+  },
+  {
+    _id: "g5",
+    title: "Oasis of Wealth Awards",
+    category: "Oasis of Wealth Awards",
+    date: "March 12, 2025",
+    location: "Kigali, Rwanda",
+    likes: 245,
+    views: 922,
+    // Changed to local image
+    image: heroImage,
+  },
+  {
+    _id: "g6",
+    title: "Youth Mentorship Session",
+    category: "Leadership Forums",
+    date: "February 20, 2025",
+    location: "Kigali, Rwanda",
+    likes: 189,
+    views: 734,
+    // Changed to local image
+    image: hero,
+  },
+];
 
-/* ─── Component ───────────────────────────────────────────────── */
+const fallbackCategories = [
+  "All",
+  "School Leadership Bootcamps",
+  "Light the Flame Debates",
+  "RLG Green Life",
+  "Leadership Forums",
+  "Oasis of Wealth Awards",
+];
+
 export default function Gallery() {
-  const [activeCategory, setActiveCategory] = useState("All");
   const [images, setImages] = useState([]);
-  const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState(["All"]);
+  const [active, setActive] = useState(null);
+  const [category, setCategory] = useState("All");
 
   useEffect(() => {
-    fetchGalleryData();
+    (async () => {
+      try {
+        const r = await fetch(`${API_URL}/gallery`);
+        const d = await r.json();
+        setImages(d.data && d.data.length > 0 ? d.data : fallbackImages);
+      } catch {
+        setImages(fallbackImages);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
-  const fetchGalleryData = async () => {
-    setLoading(true);
-    try {
-      const [galleryData, videoData] = await Promise.all([
-        api.getGallery(),
-        api.getVideoGallery()
-      ]);
-      
-      setImages(galleryData);
-      setVideos(videoData);
-      
-      // Extract unique categories from images
-      const uniqueCategories = ["All", ...new Set(galleryData.map(img => img.category).filter(Boolean))];
-      setCategories(uniqueCategories);
-    } catch (error) {
-      console.error("Failed to fetch gallery:", error);
-      showError("Error", "Failed to load gallery. Please refresh the page.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Lock body scroll when lightbox is open
+  useEffect(() => {
+    document.body.style.overflow = active ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [active]);
 
-  // Filter images based on selected category
-  const filteredImages = activeCategory === "All" 
-    ? images 
-    : images.filter(img => img.category === activeCategory);
+  // Close lightbox on Escape
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") setActive(null);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
 
-  const handleImageClick = (image) => {
-    showInfo(image.title, "Click to view full image");
-  };
+  const categories =
+    images.length > 0
+      ? ["All", ...new Set(images.map((i) => i.category).filter(Boolean))]
+      : fallbackCategories;
 
-  const handleVideoClick = (video) => {
-    showInfo(video.title, "Video will play once admin uploads the actual file.");
-  };
-
-  const handleSharePhoto = () => {
-    showSuccess("Share Your Photo", "Thank you for sharing! Our team will review and add your photo to the gallery.");
-  };
-
-  // Empty state component when no images
-  const EmptyGallery = () => (
-    <div className="rlg-empty-gallery">
-      <FontAwesomeIcon icon={faImage} size="4x" style={{ color: "#9ca3af", marginBottom: "1rem" }} />
-      <h3 style={{ color: "#14532d", marginBottom: "0.5rem" }}>No Photos Yet</h3>
-      <p style={{ color: "#6b7280", marginBottom: "1rem" }}>Gallery images will appear here once uploaded by the admin.</p>
-      <button className="btn-primary-rlg" onClick={handleSharePhoto}>
-        <FontAwesomeIcon icon={faCamera} /> Share Your Photos
-      </button>
-    </div>
-  );
-
-  if (loading) {
-    return (
-      <div className="rlg-gallery-page pt-16">
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
-          <FontAwesomeIcon icon={faSpinner} spin size="3x" color="#22c55e" />
-        </div>
-      </div>
-    );
-  }
+  const filtered =
+    category === "All" ? images : images.filter((i) => i.category === category);
 
   return (
-    <div className="rlg-gallery-page pt-16">
+    <>
       <style>{`
-        .rlg-gallery-page { font-family: 'Lato', 'Segoe UI', sans-serif; color: #1a1a1a; }
-        :root {
-          --green-900: #14532d;
-          --green-800: #166534;
-          --green-700: #15803d;
-          --green-600: #16a34a;
-          --green-500: #22c55e;
-          --green-400: #4ade80;
-          --green-100: #dcfce7;
-          --green-50:  #f0fdf4;
-          --shadow-sm: 0 2px 8px rgba(21,128,61,.10);
-          --shadow-md: 0 8px 30px rgba(21,128,61,.15);
-          --shadow-lg: 0 20px 60px rgba(21,128,61,.20);
-          --radius:    1rem;
-          --transition: .3s cubic-bezier(.4,0,.2,1);
+        /* ============================================================
+           GALLERY PAGE — matches HTML exactly
+           ============================================================ */
+        :root{
+          --navy:#152B3A;
+          --navy-deep:#0F212D;
+          --green:#2F6B4F;
+          --green-deep:#234F3B;
+          --green-light:#8FC1A3;
+          --green-bright:#3F8C63;
+          --gold:#F2C94C;
+          --paper:#FAF8F4;
+          --paper-dim:#F1EDE3;
+          --line:#E4DFD3;
+          --text:#3A3F42;
+          --text-soft:#6B7178;
         }
 
-        @keyframes fadeUp { from { opacity:0; transform:translateY(30px) } to { opacity:1; transform:none } }
-        @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
-        @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
-        
-        .fade-up { animation: fadeUp .7s both; }
-        .fade-up-1 { animation: fadeUp .7s .1s both; }
-        .fade-up-2 { animation: fadeUp .7s .2s both; }
-        .fade-up-3 { animation: fadeUp .7s .3s both; }
-
-        .rlg-container { max-width: 1200px; margin: 0 auto; padding: 0 1.25rem; }
-
-        /* Hero Section */
-        .rlg-hero {
-          position: relative; min-height: 40vh; display: flex; align-items: center;
-          background: linear-gradient(135deg, #0a2a1a 0%, #14532d 100%);
-          overflow: hidden;
+        .gl-page{
+          background:var(--paper);
+          color:var(--text);
+          font-family:'Inter', system-ui, -apple-system, sans-serif;
+          font-size:16px;
+          line-height:1.5;
         }
-        .rlg-hero::before {
-          content:''; position:absolute; inset:0;
-          background: url(${heroBg}) center/cover no-repeat;
-          opacity:.12;
-        }
-        .rlg-hero-content { position: relative; z-index: 2; padding: 4rem 0; text-align: center; }
-        .rlg-hero h1 { font-family:'Playfair Display',Georgia,serif; font-size:clamp(2.5rem,5vw,4rem); font-weight:800; color:#fff; margin-bottom:1rem; }
-        .rlg-hero p { color:rgba(255,255,255,.85); font-size:1.1rem; max-width:700px; margin:0 auto; line-height:1.7; }
+        .gl-page *{ box-sizing:border-box; }
+        .gl-page img{ max-width:100%; display:block; }
 
-        /* Coming Soon Banner */
-        .rlg-coming-soon {
-          background: linear-gradient(135deg, #fef3c7, #fde68a);
-          border-left: 4px solid #f59e0b;
-          padding: 1rem 1.5rem;
-          margin: 2rem auto;
-          border-radius: var(--radius);
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          flex-wrap: wrap;
-          gap: 1rem;
+        .gl-container{
+          max-width:1280px;
+          margin:0 auto;
+          padding:0 48px;
         }
-        .rlg-coming-soon p { margin: 0; color: #92400e; font-weight: 500; }
-        .rlg-coming-soon small { color: #b45309; font-size: .8rem; }
+        .gl-section{
+          padding:100px 0;
+          position:relative;
+        }
 
-        /* Section Label */
-        .rlg-label {
-          display:inline-flex;align-items:center;gap:.5rem;
-          background:linear-gradient(135deg, #dcfce7, #f0fdf4);
-          color:#14532d;
-          padding:.5rem 1.25rem;
-          border-radius:999px;
-          font-size:.8rem;
+        .gl-eyebrow{
+          display:inline-flex;
+          align-items:center;
+          gap:8px;
+          font-size:12.5px;
           font-weight:700;
-          letter-spacing:.05em;
+          letter-spacing:0.12em;
           text-transform:uppercase;
-          margin-bottom:1rem;
-          border:1px solid rgba(34,197,94,0.3);
+          color:var(--green);
+          margin-bottom:16px;
         }
-        .rlg-section-title { font-family:'Playfair Display',Georgia,serif; font-size:clamp(1.8rem,3vw,2.6rem); font-weight:800; color:#111; margin-bottom:.75rem; }
-
-        /* Category Filters */
-        .rlg-categories {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.75rem;
-          justify-content: center;
-          margin: 2rem 0;
-        }
-        .rlg-cat-btn {
-          background: var(--green-50);
-          border: 1px solid #e5e7eb;
-          padding: 0.6rem 1.2rem;
-          border-radius: 999px;
-          font-size: 0.85rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: var(--transition);
-          color: #14532d;
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-        .rlg-cat-btn:hover, .rlg-cat-btn.active {
-          background: linear-gradient(135deg, #22c55e, #16a34a);
-          color: #fff;
-          border-color: transparent;
+        .gl-eyebrow .dot{
+          width:6px;
+          height:6px;
+          border-radius:50%;
+          background:var(--gold);
         }
 
-        /* Gallery Grid */
-        .rlg-gallery-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 1.5rem;
-          margin: 2rem 0;
+        /* ---------- Page Hero ---------- */
+        .gl-hero{
+          position:relative;
+          background:linear-gradient(135deg, var(--navy) 0%, var(--green-deep) 100%);
+          padding:140px 0 100px;
+          overflow:hidden;
+          color:#fff;
+          text-align:center;
         }
-        @media (max-width: 1024px) { .rlg-gallery-grid { grid-template-columns: repeat(3, 1fr); } }
-        @media (max-width: 768px) { .rlg-gallery-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 480px) { .rlg-gallery-grid { grid-template-columns: 1fr; } }
-        .rlg-gallery-item {
-          background: #fff;
-          border-radius: var(--radius);
-          overflow: hidden;
-          box-shadow: var(--shadow-sm);
-          transition: var(--transition);
-          border: 1px solid #e5e7eb;
-          cursor: pointer;
-          position: relative;
+        .gl-hero::before{
+          content:'';
+          position:absolute;
+          top:-40%; left:-10%;
+          width:70%; height:180%;
+          background:radial-gradient(ellipse, rgba(143,193,163,0.22), transparent 65%);
+          pointer-events:none;
         }
-        .rlg-gallery-item:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); border-color: #22c55e; }
-        .rlg-gallery-preview {
-          background: linear-gradient(135deg, #22c55e, #16a34a);
-          height: 200px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
+        .gl-hero::after{
+          content:'';
+          position:absolute;
+          bottom:-50%; right:-10%;
+          width:60%; height:160%;
+          background:radial-gradient(ellipse, rgba(242,201,76,0.12), transparent 65%);
+          pointer-events:none;
         }
-        .rlg-gallery-preview svg { font-size: 3rem; color: #fff; opacity: 0.8; }
-        .rlg-overlay {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0,0,0,0.5);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          opacity: 0;
-          transition: var(--transition);
+        .gl-hero-inner{
+          position:relative;
+          z-index:1;
+          max-width:760px;
+          margin:0 auto;
+          padding:0 24px;
         }
-        .rlg-gallery-item:hover .rlg-overlay { opacity: 1; }
-        .rlg-overlay svg { font-size: 2rem; color: #fff; }
-        .rlg-gallery-info {
-          padding: 1rem;
+        .gl-hero .gl-eyebrow{
+          color:var(--green-light);
+          justify-content:center;
         }
-        .rlg-gallery-info h3 {
-          font-size: 0.9rem;
-          font-weight: 700;
-          color: #14532d;
-          margin-bottom: 0.3rem;
+        .gl-hero h1{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-weight:600;
+          font-size:clamp(38px, 5vw, 60px);
+          line-height:1.1;
+          letter-spacing:-0.02em;
+          color:#fff;
+          margin-bottom:20px;
         }
-        .rlg-gallery-meta {
-          display: flex;
-          gap: 0.8rem;
-          font-size: 0.7rem;
-          color: #6b7280;
-        }
-        .rlg-gallery-meta span { display: flex; align-items: center; gap: 0.2rem; }
-
-        /* Empty Gallery State */
-        .rlg-empty-gallery {
-          text-align: center;
-          padding: 4rem 2rem;
-          background: var(--green-50);
-          border-radius: var(--radius);
-          margin: 2rem 0;
+        .gl-hero h1 .accent{ color:var(--gold); }
+        .gl-hero p{
+          font-size:clamp(16px, 1.3vw, 19px);
+          line-height:1.65;
+          color:rgba(255,255,255,0.82);
+          max-width:620px;
+          margin:0 auto;
         }
 
-        /* Video Gallery */
-        .rlg-video-section { margin: 3rem 0; }
-        .rlg-video-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 1.5rem;
-          margin-top: 1.5rem;
+        /* ---------- Category Filter ---------- */
+        .gl-category-filter{
+          display:flex;
+          justify-content:center;
+          flex-wrap:wrap;
+          gap:10px;
+          margin-bottom:48px;
         }
-        @media (max-width: 768px) { .rlg-video-grid { grid-template-columns: 1fr; } }
-        .rlg-video-card {
-          background: #fff;
-          border-radius: var(--radius);
-          overflow: hidden;
-          box-shadow: var(--shadow-sm);
-          transition: var(--transition);
-          border: 1px solid #e5e7eb;
-          cursor: pointer;
+        .gl-category-tab{
+          display:inline-flex;
+          align-items:center;
+          gap:6px;
+          padding:9px 18px;
+          border-radius:100px;
+          border:1.5px solid var(--line);
+          background:#fff;
+          color:var(--green-deep);
+          font-size:13px;
+          font-weight:600;
+          font-family:'Inter', sans-serif;
+          cursor:pointer;
+          transition:all 0.2s ease;
+          white-space:nowrap;
         }
-        .rlg-video-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); border-color: #22c55e; }
-        .rlg-video-preview {
-          background: linear-gradient(135deg, #14532d, #0a2a1a);
-          height: 180px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
+        .gl-category-tab:hover{
+          border-color:var(--green);
+          color:var(--green);
         }
-        .rlg-play-btn {
-          width: 60px;
-          height: 60px;
-          background: rgba(255,255,255,0.2);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          backdrop-filter: blur(4px);
-          transition: var(--transition);
+        .gl-category-tab.active{
+          background:var(--green);
+          border-color:var(--green);
+          color:#fff;
+          box-shadow:0 4px 12px rgba(47,107,79,0.28);
         }
-        .rlg-video-card:hover .rlg-play-btn { transform: scale(1.1); background: rgba(34,197,94,0.8); }
-        .rlg-play-btn svg { font-size: 1.5rem; color: #fff; }
-        .rlg-video-info { padding: 1rem; }
-        .rlg-video-info h3 { font-size: 1rem; font-weight: 700; color: #14532d; margin-bottom: 0.3rem; }
-        .rlg-video-info p { color: #6b7280; font-size: 0.8rem; }
 
-        /* Share Section */
-        .rlg-share-section {
-          background: var(--green-50);
-          padding: 2rem;
-          border-radius: var(--radius);
-          text-align: center;
-          margin: 3rem 0;
+        /* ---------- Gallery Grid ---------- */
+        .gl-grid{
+          display:grid;
+          grid-template-columns:repeat(3, 1fr);
+          gap:28px;
         }
-        .rlg-share-section h3 { font-size: 1.3rem; font-weight: 800; color: #14532d; margin-bottom: 0.5rem; }
-        .rlg-share-section p { color: #6b7280; margin-bottom: 1rem; }
+        .gl-card{
+          background:#fff;
+          border:1px solid var(--line);
+          border-radius:12px;
+          overflow:hidden;
+          transition:transform 0.25s ease, box-shadow 0.25s ease;
+          display:flex;
+          flex-direction:column;
+        }
+        .gl-card:hover{
+          transform:translateY(-6px);
+          box-shadow:0 24px 48px rgba(21,43,58,0.14);
+        }
+        .gl-img-btn{
+          width:100%;
+          border:none;
+          cursor:pointer;
+          background:none;
+          padding:0;
+          position:relative;
+          display:block;
+          overflow:hidden;
+        }
+        .gl-img-wrap{
+          height:240px;
+          position:relative;
+          overflow:hidden;
+          background:linear-gradient(135deg, var(--navy), var(--green-deep));
+        }
+        .gl-img-wrap img{
+          width:100%; height:100%;
+          object-fit:cover;
+          transition:transform 0.6s ease;
+        }
+        .gl-card:hover .gl-img-wrap img{
+          transform:scale(1.08);
+        }
+        .gl-img-overlay{
+          position:absolute;
+          inset:0;
+          background:linear-gradient(180deg, rgba(15,33,45,0) 40%, rgba(15,33,45,0.75) 100%);
+          opacity:0;
+          transition:opacity 0.3s ease;
+          display:flex;
+          align-items:flex-end;
+          justify-content:space-between;
+          padding:18px;
+        }
+        .gl-card:hover .gl-img-overlay{
+          opacity:1;
+        }
+        .gl-expand-icon{
+          width:40px; height:40px;
+          border-radius:50%;
+          background:rgba(255,255,255,0.95);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          margin-left:auto;
+        }
+        .gl-expand-icon svg{
+          width:16px; height:16px;
+          stroke:var(--navy);
+          fill:none;
+          stroke-width:2.2;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
 
-        .btn-primary-rlg {
-          display: inline-flex; align-items: center; gap: .5rem;
-          background: linear-gradient(135deg, #22c55e, #16a34a);
-          color: #fff; padding: .8rem 1.8rem; border-radius: 999px;
-          font-weight: 700; border: none; cursor: pointer; transition: var(--transition);
-          text-decoration: none;
+        .gl-card-body{
+          padding:22px 24px 24px;
+          flex:1;
+          display:flex;
+          flex-direction:column;
         }
-        .btn-primary-rlg:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(34,197,94,0.4); }
-        .btn-outline-rlg {
-          display: inline-flex; align-items: center; gap: .5rem;
-          background: transparent; color: #14532d; padding: .8rem 1.8rem;
-          border-radius: 999px; font-weight: 700; border: 2px solid #22c55e;
-          cursor: pointer; transition: var(--transition); text-decoration: none;
+        .gl-category-badge{
+          display:inline-flex;
+          align-items:center;
+          align-self:flex-start;
+          gap:6px;
+          font-size:11px;
+          font-weight:700;
+          letter-spacing:0.08em;
+          text-transform:uppercase;
+          color:var(--green);
+          background:rgba(47,107,79,0.1);
+          padding:5px 12px;
+          border-radius:100px;
+          margin-bottom:12px;
         }
-        .btn-outline-rlg:hover { background: #22c55e; color: #fff; transform: translateY(-2px); }
+        .gl-card h3{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:17px;
+          font-weight:600;
+          color:var(--navy);
+          line-height:1.4;
+          margin-bottom:14px;
+          flex:1;
+        }
+        .gl-meta{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:12px;
+          padding-top:14px;
+          border-top:1px solid var(--line);
+          font-size:12.5px;
+          color:var(--text-soft);
+          flex-wrap:wrap;
+        }
+        .gl-date-location{
+          display:inline-flex;
+          align-items:center;
+          gap:6px;
+        }
+        .gl-date-location svg{
+          width:13px; height:13px;
+          stroke:var(--text-soft);
+          fill:none;
+          stroke-width:1.8;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+        .gl-stats{
+          display:inline-flex;
+          align-items:center;
+          gap:12px;
+        }
+        .gl-stats .stat{
+          display:inline-flex;
+          align-items:center;
+          gap:4px;
+        }
+        .gl-stats .stat svg{
+          width:13px; height:13px;
+          fill:currentColor;
+          stroke:none;
+        }
+        .gl-stats .stat.likes svg{ fill:var(--green); }
+        .gl-stats .stat.views svg{ fill:var(--text-soft); }
 
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Lato:wght@400;700&display=swap');
+        /* ---------- Lightbox ---------- */
+        .gl-lightbox{
+          position:fixed;
+          inset:0;
+          background:rgba(6,15,22,0.9);
+          z-index:2000;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          padding:24px;
+          opacity:0;
+          visibility:hidden;
+          transition:opacity 0.25s ease, visibility 0.25s ease;
+          backdrop-filter:blur(6px);
+        }
+        .gl-lightbox.open{
+          opacity:1;
+          visibility:visible;
+        }
+        .gl-lightbox-close{
+          position:absolute;
+          top:24px; right:28px;
+          width:44px; height:44px;
+          border-radius:50%;
+          background:rgba(255,255,255,0.1);
+          border:1px solid rgba(255,255,255,0.2);
+          color:#fff;
+          cursor:pointer;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          transition:background 0.2s ease, transform 0.2s ease;
+        }
+        .gl-lightbox-close:hover{
+          background:rgba(255,255,255,0.2);
+          transform:rotate(90deg);
+        }
+        .gl-lightbox-close svg{
+          width:18px; height:18px;
+          stroke:currentColor;
+          fill:none;
+          stroke-width:2.2;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+        .gl-lightbox-inner{
+          max-width:900px;
+          width:100%;
+          position:relative;
+        }
+        .gl-lightbox-image{
+          width:100%;
+          max-height:70vh;
+          border-radius:12px;
+          overflow:hidden;
+          position:relative;
+          background:var(--navy-deep);
+          box-shadow:0 24px 64px rgba(0,0,0,0.5);
+        }
+        .gl-lightbox-image img{
+          width:100%;
+          height:100%;
+          max-height:70vh;
+          object-fit:cover;
+          display:block;
+        }
+        .gl-lightbox-caption{
+          margin-top:20px;
+          display:flex;
+          align-items:flex-start;
+          justify-content:space-between;
+          gap:24px;
+          flex-wrap:wrap;
+          color:rgba(255,255,255,0.9);
+        }
+        .gl-lightbox-caption .title{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:22px;
+          font-weight:600;
+          color:#fff;
+          margin-bottom:8px;
+        }
+        .gl-lightbox-caption .meta{
+          display:flex;
+          gap:20px;
+          flex-wrap:wrap;
+          font-size:13.5px;
+          color:rgba(255,255,255,0.72);
+        }
+        .gl-lightbox-caption .meta span{
+          display:inline-flex;
+          align-items:center;
+          gap:6px;
+        }
+        .gl-lightbox-caption .meta svg{
+          width:14px; height:14px;
+          stroke:var(--green-light);
+          fill:none;
+          stroke-width:1.8;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+
+        /* ---------- CTA ---------- */
+        .gl-cta{
+          background:linear-gradient(135deg, var(--green) 0%, var(--green-deep) 100%);
+          position:relative;
+          overflow:hidden;
+          padding:80px 0;
+        }
+        .gl-cta::before{
+          content:'';
+          position:absolute;
+          top:-60%; right:-10%;
+          width:60%; height:220%;
+          background:radial-gradient(ellipse, rgba(242,201,76,0.15), transparent 65%);
+          pointer-events:none;
+        }
+        .gl-cta-inner{
+          position:relative;
+          z-index:1;
+          text-align:center;
+          max-width:720px;
+          margin:0 auto;
+        }
+        .gl-cta h2{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-weight:600;
+          font-size:clamp(30px, 3.5vw, 42px);
+          line-height:1.2;
+          letter-spacing:-0.02em;
+          color:#fff;
+          margin-bottom:18px;
+        }
+        .gl-cta p{
+          font-size:16.5px;
+          color:rgba(255,255,255,0.82);
+          line-height:1.7;
+          margin-bottom:36px;
+        }
+        .gl-cta-actions{
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          gap:16px;
+          flex-wrap:wrap;
+        }
+        .gl-btn-white{
+          display:inline-flex;
+          align-items:center;
+          gap:10px;
+          background:#fff;
+          color:var(--green-deep);
+          font-size:15.5px;
+          font-weight:700;
+          padding:16px 32px;
+          border-radius:6px;
+          border:none;
+          cursor:pointer;
+          text-decoration:none;
+          transition:transform 0.15s ease, box-shadow 0.2s ease;
+          box-shadow:0 8px 24px rgba(0,0,0,0.15);
+          font-family:'Inter', sans-serif;
+        }
+        .gl-btn-white:hover{
+          transform:translateY(-2px);
+          box-shadow:0 12px 32px rgba(0,0,0,0.22);
+        }
+        .gl-btn-outline-white{
+          display:inline-flex;
+          align-items:center;
+          gap:10px;
+          background:transparent;
+          color:#fff;
+          font-size:15.5px;
+          font-weight:600;
+          padding:16px 32px;
+          border-radius:6px;
+          border:1.5px solid rgba(255,255,255,0.4);
+          cursor:pointer;
+          text-decoration:none;
+          transition:background 0.2s ease, border-color 0.2s ease;
+          font-family:'Inter', sans-serif;
+        }
+        .gl-btn-outline-white:hover{
+          background:rgba(255,255,255,0.1);
+          border-color:rgba(255,255,255,0.7);
+        }
+
+        /* ---------- Responsive ---------- */
+        @media (max-width: 1024px){
+          .gl-container{ padding:0 32px; }
+          .gl-hero{ padding:110px 0 80px; }
+          .gl-grid{ grid-template-columns:repeat(2, 1fr); }
+        }
+        @media (max-width: 640px){
+          .gl-container{ padding:0 22px; }
+          .gl-section{ padding:72px 0; }
+          .gl-hero{ padding:90px 0 70px; }
+          .gl-grid{ grid-template-columns:1fr; }
+          .gl-lightbox-close{ top:16px; right:16px; }
+          .gl-cta-actions{ flex-direction:column; }
+          .gl-btn-white, .gl-btn-outline-white{ width:100%; justify-content:center; }
+        }
+        @media (prefers-reduced-motion: reduce){
+          .gl-page *{ transition:none !important; animation:none !important; }
+        }
       `}</style>
 
-      {/* HERO SECTION */}
-      <section className="rlg-hero">
-        <div className="rlg-hero-content">
-          <div className="rlg-container">
-            <div className="fade-up">
-              <h1>Gallery</h1>
-              <p>Moments of Leadership in Action – Capturing the journey of young leaders across Rwanda</p>
-            </div>
+      <div className="gl-page">
+
+        {/* ============ PAGE HERO ============ */}
+        <section className="gl-hero">
+          <div className="gl-hero-inner">
+            <span className="gl-eyebrow"><span className="dot"></span> Visual Stories</span>
+            <h1>Our <span className="accent">Gallery</span></h1>
+            <p>
+              A look into our events, clubs, and community impact across Rwanda —
+              captured in moments that matter.
+            </p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* COMING SOON BANNER */}
-      <div className="rlg-container">
-        <div className="rlg-coming-soon fade-up">
-          <p>
-            <FontAwesomeIcon icon={faSpinner} style={{ marginRight: ".5rem", animation: "pulse 2s infinite" }} />
-            <strong>Admin Preview Mode:</strong> Photos and videos will appear here once published from the backend.
-          </p>
-          <small>📸 Waiting for admin to upload media</small>
-        </div>
-      </div>
+        {/* ============ GALLERY ============ */}
+        <section className="gl-section">
+          <div className="gl-container">
 
-      {/* GALLERY CONTENT */}
-      <div className="rlg-container">
-        <div className="fade-up-1">
-          <div className="rlg-label"><FontAwesomeIcon icon={faCamera} /> Photo Gallery</div>
-          <h2 className="rlg-section-title">Leadership in Action</h2>
-        </div>
-
-        {/* Category Filters - Only show if there are images */}
-        {categories.length > 1 && (
-          <div className="rlg-categories fade-up-2">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                className={`rlg-cat-btn ${activeCategory === cat ? "active" : ""}`}
-                onClick={() => setActiveCategory(cat)}
-              >
-                <FontAwesomeIcon icon={faImage} />
-                {cat}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Image Gallery Grid or Empty State */}
-        {filteredImages.length > 0 ? (
-          <div className="rlg-gallery-grid">
-            {filteredImages.map((image, index) => (
-              <div 
-                key={image._id || index} 
-                className="rlg-gallery-item fade-up-3"
-                style={{ animationDelay: `${index * 0.05}s` }}
-                onClick={() => handleImageClick(image)}
-              >
-                <div className="rlg-gallery-preview">
-                  <FontAwesomeIcon icon={faImage} />
-                  <div className="rlg-overlay">
-                    <FontAwesomeIcon icon={faEye} />
-                  </div>
-                </div>
-                <div className="rlg-gallery-info">
-                  <h3>{image.title}</h3>
-                  <div className="rlg-gallery-meta">
-                    <span><FontAwesomeIcon icon={faCalendarAlt} /> {new Date(image.createdAt).toLocaleDateString()}</span>
-                    <span><FontAwesomeIcon icon={faHeart} /> {image.likes || 0}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <EmptyGallery />
-        )}
-
-        {/* Video Gallery Section - Only show if there are videos */}
-        {videos.length > 0 && (
-          <div className="rlg-video-section fade-up-1">
-            <div className="rlg-label"><FontAwesomeIcon icon={faVideo} /> Video Gallery</div>
-            <h2 className="rlg-section-title">Watch Leadership in Motion</h2>
-            
-            <div className="rlg-video-grid">
-              {videos.map((video, index) => (
-                <div 
-                  key={video._id || index} 
-                  className="rlg-video-card"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                  onClick={() => handleVideoClick(video)}
+            {/* Category Filter */}
+            <div className="gl-category-filter">
+              {categories.map((c) => (
+                <button
+                  key={c}
+                  className={`gl-category-tab ${category === c ? "active" : ""}`}
+                  onClick={() => setCategory(c)}
                 >
-                  <div className="rlg-video-preview">
-                    <div className="rlg-play-btn">
-                      <FontAwesomeIcon icon={faPlayCircle} />
-                    </div>
-                  </div>
-                  <div className="rlg-video-info">
-                    <h3>{video.title}</h3>
-                    <p><FontAwesomeIcon icon={faClock} /> {video.duration || 'Coming soon'}</p>
-                  </div>
-                </div>
+                  {c}
+                </button>
               ))}
             </div>
+
+            {/* Gallery Grid */}
+            {loading ? (
+              <div style={{ textAlign: "center", padding: "3rem", color: "#6B7178" }}>
+                Loading gallery...
+              </div>
+            ) : (
+              <div className="gl-grid">
+                {filtered.map((img) => (
+                  <article key={img._id || img.title} className="gl-card">
+                    <button
+                      className="gl-img-btn"
+                      onClick={() => setActive(img)}
+                      aria-label={`View ${img.title}`}
+                    >
+                      <div className="gl-img-wrap">
+                        {/* Using local images now */}
+                        <img src={img.image || img.url} alt={img.title} />
+                        <div className="gl-img-overlay">
+                          <span className="gl-expand-icon">
+                            <svg viewBox="0 0 24 24">
+                              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                            </svg>
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+
+                    <div className="gl-card-body">
+                      <span className="gl-category-badge">{img.category}</span>
+                      <h3>{img.title}</h3>
+                      <div className="gl-meta">
+                        <span className="gl-date-location">
+                          <svg viewBox="0 0 24 24">
+                            <rect x="3" y="4" width="18" height="18" rx="2" />
+                            <path d="M16 2v4M8 2v4M3 10h18" />
+                          </svg>
+                          {img.date}
+                        </span>
+                        <span className="gl-stats">
+                          <span className="stat likes">
+                            <svg viewBox="0 0 24 24">
+                              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                            </svg>
+                            {img.likes || 0}
+                          </span>
+                          <span className="stat views">
+                            <svg viewBox="0 0 24 24">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                              <circle cx="12" cy="12" r="3" fill="#fff" />
+                            </svg>
+                            {img.views || 0}
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+
+          </div>
+        </section>
+
+        {/* ============ CTA ============ */}
+        <section className="gl-cta">
+          <div className="gl-container">
+            <div className="gl-cta-inner">
+              <h2>Be part of the next story</h2>
+              <p>
+                Every image here started with someone deciding to show up. Join us at
+                our next event, volunteer, or bring our programs to your school.
+              </p>
+              <div className="gl-cta-actions">
+                <Link to="/getinvolved" className="gl-btn-white">
+                  Get Involved
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                </Link>
+                <Link to="/programs" className="gl-btn-outline-white">
+                  View Our Programs
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      {/* ============ LIGHTBOX ============ */}
+      <div
+        className={`gl-lightbox ${active ? "open" : ""}`}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) setActive(null);
+        }}
+      >
+        <button
+          className="gl-lightbox-close"
+          aria-label="Close"
+          onClick={() => setActive(null)}
+        >
+          <svg viewBox="0 0 24 24">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
+
+        {active && (
+          <div className="gl-lightbox-inner">
+            <div className="gl-lightbox-image">
+              <img src={active.image || active.url} alt={active.title} />
+            </div>
+            <div className="gl-lightbox-caption">
+              <div>
+                <div className="title">{active.title}</div>
+                <div className="meta">
+                  <span>
+                    <svg viewBox="0 0 24 24">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    <span>{active.location || "Kigali, Rwanda"}</span>
+                  </span>
+                  <span>
+                    <svg viewBox="0 0 24 24">
+                      <rect x="3" y="4" width="18" height="18" rx="2" />
+                      <path d="M16 2v4M8 2v4M3 10h18" />
+                    </svg>
+                    <span>{active.date}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
-
-        {/* Share Your Photos Section */}
-        <div className="rlg-share-section fade-up-2">
-          <h3><FontAwesomeIcon icon={faShare} /> Share Your RLG Moments</h3>
-          <p>Have photos from RLG events? Share them with our community!</p>
-          <button className="btn-primary-rlg" onClick={handleSharePhoto}>
-            <FontAwesomeIcon icon={faCamera} /> Share Your Photos
-          </button>
-          <Link to="/contact">
-            <button className="btn-outline-rlg" style={{ marginLeft: "1rem" }}>
-              <FontAwesomeIcon icon={faEnvelope} /> Contact Media Team
-            </button>
-          </Link>
-        </div>
       </div>
-    </div>
+    </>
   );
 }
