@@ -1,4 +1,5 @@
 const GetInvolved = require('../models/GetInvolved.model');
+const { sendEmail } = require('../utils/sendEmail');
 const { ApiResponse } = require('../utils/apiResponse');
 
 // @desc    Submit get involved form
@@ -20,6 +21,31 @@ const submitGetInvolved = async (req, res) => {
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'],
     });
+
+    // Notify RLG team via email
+    try {
+      await sendEmail({
+        email: process.env.EMAIL_USER || 'raisingleaderofgeneration@gmail.com',
+        subject: `New Get Involved Application: ${interest}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #166534;">New Get Involved Application</h2>
+            <div style="background: #f0fdf4; padding: 15px; border-left: 4px solid #16a34a; margin: 15px 0;">
+              <p><strong>Full Name:</strong> ${fullName}</p>
+              <p><strong>Email:</strong> ${email}</p>
+              <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
+              <p><strong>Organization:</strong> ${organization || 'N/A'}</p>
+              <p><strong>Interest:</strong> ${interest}</p>
+              <p><strong>District:</strong> ${district || 'N/A'}</p>
+              <p><strong>Message:</strong><br/>${message || 'N/A'}</p>
+            </div>
+            <p>Review applications from the admin panel: <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/admin/getinvolved">RLG Admin</a></p>
+          </div>
+        `,
+      });
+    } catch (emailError) {
+      console.log('Get Involved notification email failed:', emailError.message);
+    }
     
     return ApiResponse.created(res, submission, 'Application submitted successfully! A coordinator will contact you soon.');
   } catch (error) {
