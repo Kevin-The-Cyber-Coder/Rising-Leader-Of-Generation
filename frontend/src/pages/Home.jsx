@@ -1,923 +1,1444 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faGraduationCap, faGlobe, faUsers, faCalendarAlt, faArrowRight,
-  faRocket, faLightbulb, faHandshake, faChartLine, faTrophy,
-  faHeart, faStar, faQuoteLeft, faCheckCircle, faClock,
-  faMapMarkerAlt, faEnvelope, faPlayCircle, faAward, faTree,
-  faBookOpen, faLaptopCode, faComments, faBullhorn, faBuilding,
-  faUserTie, faLeaf, faEye, faStarHalfAlt, faSchool,
-  faMicrophone, faChalkboardUser, faPeopleGroup, faBrain,
-  faFlag, faHandshakeSimple, faMedal, faFire, faNewspaper,
-  faShieldHeart, faSeedling, faHandsHelping, faCompass,
-  faGem, faDove, faHandSpock, faSmile
-} from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
-import {
-  heroBg, heroImage, testimonial1, testimonial2, testimonial3,
-} from "../assets";
 
-/* ─── SweetAlert2 helpers ─────────────────────────────────────── */
-const showSuccess = (title, text) =>
-  Swal.fire({ icon: "success", title, text, confirmButtonColor: "#166534", timer: 3500, timerProgressBar: true });
-const showInfo = (title, text) =>
-  Swal.fire({ icon: "info", title, text, confirmButtonColor: "#166534" });
-const showToast = (message, icon = "success") =>
-  Swal.mixin({ toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true })
-    .fire({ icon, title: message });
+// --- IMPORT ALL ASSETS ---
+import aboutImage from '../assets/about-image.jpg';
 
-/* ─── API Service ─────────────────────────────────────────────── */
-const API_URL = 'http://localhost:5000/api';
+import event1 from '../assets/event-1.jpg';
+import event2 from '../assets/event-2.jpg';
+import event3 from '../assets/event-3.jpg';
+import footerLogo from '../assets/footer-logo.png';
+import heroBg from '../assets/hero-bg.jpg';
+import heroImage from '../assets/hero-image.png';
+import heroImg from '../assets/hero-img.jpg';
+import hero from '../assets/hero.png';
+import logo from '../assets/logo.png';
+import patternBg from '../assets/pattern-bg.svg';
+import programIcon1 from '../assets/program-icon-1.png';
+import programIcon2 from '../assets/program-icon-2.png';
+import programIcon3 from '../assets/program-icon-3.png';
+import reactSvg from '../assets/react.svg';
+import volimg from '../assets/vol.jpeg'; 
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+/* ---------- API helpers ---------- */
 const api = {
-  subscribeNewsletter: async (email) => {
-    const response = await fetch(`${API_URL}/newsletter`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message);
-    return data;
-  },
-  getTestimonials: async () => {
-    try {
-      const response = await fetch(`${API_URL}/testimonials`);
-      const data = await response.json();
-      return data.data || [];
-    } catch (error) {
-      return [];
-    }
-  },
   getPrograms: async () => {
     try {
-      const response = await fetch(`${API_URL}/programs`);
-      const data = await response.json();
-      return data.data || [];
-    } catch (error) {
-      return [];
-    }
+      const r = await fetch(`${API_URL}/programs`);
+      const d = await r.json();
+      return d.data || [];
+    } catch { return []; }
+  },
+  getBlogs: async () => {
+    try {
+      const r = await fetch(`${API_URL}/blogs?limit=3`);
+      const d = await r.json();
+      return d.data?.blogs || [];
+    } catch { return []; }
   },
   getStats: async () => {
     try {
-      const response = await fetch(`${API_URL}/dashboard/stats`);
-      const data = await response.json();
-      return data.data || {};
-    } catch (error) {
-      return {};
-    }
-  }
+      const r = await fetch(`${API_URL}/dashboard/stats`);
+      const d = await r.json();
+      return d.data || {};
+    } catch { return {}; }
+  },
+  getTestimonials: async () => {
+    try {
+      const r = await fetch(`${API_URL}/testimonials`);
+      const d = await r.json();
+      return d.data || [];
+    } catch { return []; }
+  },
 };
 
-/* ─── Data ────────────────────────────────────────────────────── */
-const coreValues = [
-  { name: "Discipline", icon: faCompass, color: "#14532d", description: "Self-control and dedication to excellence" },
-  { name: "Commitment & Courage", icon: faShieldHeart, color: "#166534", description: "Bold actions and unwavering dedication" },
-  { name: "Loyalty", icon: faDove, color: "#15803d", description: "Faithful dedication to our mission" },
-  { name: "Passion", icon: faFire, color: "#16a34a", description: "Enthusiasm that drives change" },
-  { name: "Sociable", icon: faSmile, color: "#22c55e", description: "Building meaningful connections" },
-  { name: "Team Work", icon: faHandshake, color: "#14532d", description: "Collaboration for greater impact" },
-  { name: "Competence & Excellence", icon: faGem, color: "#166534", description: "Mastery and outstanding quality" },
-  { name: "Respect", icon: faHandSpock, color: "#15803d", description: "Valuing every individual's dignity" },
-  { name: "Dignity", icon: faMedal, color: "#16a34a", description: "Honorable conduct and self-worth" },
-  { name: "Empathy", icon: faHandsHelping, color: "#22c55e", description: "Understanding and serving others" },
-];
-
-const blogPosts = [
+/* ---------- Fallback programs (used if API returns nothing) ---------- */
+const fallbackPrograms = [
   {
-    title: "Why Mental Transformation is the First Step to Leadership",
-    excerpt: "Understanding leadership starts from within. Here's how RLG is helping young people rewire their minds for impact.",
-    date: "May 15, 2025",
-    link: "/blog/mental-transformation"
+    tag: "Education",
+    title: "School Leadership Development",
+    description:
+      "Trainings and mentoring for students through student councils and leadership bootcamps.",
+    image: event1, 
+    iconSrc: programIcon1, 
   },
   {
-    title: "Recap: Light the Flame Debate Competition 2025",
-    excerpt: "Students from 5 schools battled in public speaking. See the winners and highlights.",
-    date: "April 28, 2025",
-    link: "/blog/light-the-flame-2025"
-  }
+    tag: "Healthcare",
+    title: "Tournaments & Competitions",
+    description:
+      "Debate, public speaking,UN Modal,Professional Leadership Interview,interschool challenges, and leadership awards.",
+    image: event2, 
+    iconSrc: programIcon2, 
+  },
+  {
+    tag: "Justice",
+    title: "Leadership Forums & Conferences",
+    description:
+      "Summits and forums on governance, entrepreneurship, and networking platforms.",
+    image: event3, 
+    iconSrc: programIcon3, 
+  },
 ];
 
-/* ─── useCountUp hook ─────────────────────────────────────────── */
-function useCountUp(target, duration = 2800) {
-  const [val, setVal] = useState(0);
-  const started = useRef(false);
-  useEffect(() => {
-    if (started.current) return;
-    started.current = true;
-    const steps = 60;
-    const inc = target / steps;
-    let cur = 0;
-    const id = setInterval(() => {
-      cur = Math.min(cur + inc, target);
-      setVal(Math.floor(cur));
-      if (cur >= target) clearInterval(id);
-    }, duration / steps);
-    return () => clearInterval(id);
-  }, [target, duration]);
-  return val;
-}
+/* ---------- Fallback testimonials (6 people, including original) ---------- */
+const fallbackTestimonials = [
+  {
+    quote:
+      "When the mobile clinic arrived in our village, it was the first time in years anyone had access to a doctor. My daughter got the care she needed. That day changed our lives forever.",
+    name: "Gihozo Anny",
+    role: "Student at Essa Nyarugunga RLG Club",
+    avatar: heroImg,
+  },
+  {
+    quote:
+      "RLG gave me the confidence to speak in front of hundreds of people. I went from being shy to leading my school's debate team. This program truly transforms lives.",
+    name: "Mugisha Eric",
+    role: "Student Leader, Kigali Secondary School",
+    avatar: heroImg,
+  },
+  {
+    quote:
+      "The leadership bootcamp opened my eyes to what I could become. I learned that leadership isn't about titles — it's about service and integrity.",
+    name: "Uwase Claudine",
+    role: "RLG Club Member, Gasabo District",
+    avatar: heroImg,
+  },
+  {
+    quote:
+      "I joined as a volunteer and ended up finding my life's purpose. Mentoring young people through RLG has been the most rewarding experience of my life.",
+    name: "Nkurunziza Patrick",
+    role: "Volunteer Mentor, RLG",
+    avatar: heroImg,
+  },
+  {
+    quote:
+      "The entrepreneurship forum gave me the tools to start my own small business while still in school. I now employ two of my classmates.",
+    name: "Ingabire Sandrine",
+    role: "Young Entrepreneur & RLG Alumna",
+    avatar: heroImg,
+  },
+  {
+    quote:
+      "As a teacher, I've watched RLG transform students who were once disengaged into passionate leaders. The impact is visible and lasting.",
+    name: "Habimana Jean",
+    role: "Teacher & RLG Partner School Coordinator",
+    avatar: heroImg,
+  },
+];
 
-/* ─── Component ───────────────────────────────────────────────── */
+// Array of hero images for the slider
+const heroImages = [heroImg, heroBg, heroImage, hero];
+
 export default function Home() {
-  const [currentTestimonial, setCurrentTestimonial] = useState(0);
-  const [email, setEmail] = useState("");
-  const [backendTestimonials, setBackendTestimonials] = useState([]);
-  const [backendPrograms, setBackendPrograms] = useState([]);
-  const [backendStats, setBackendStats] = useState({});
-  const [dataLoaded, setDataLoaded] = useState(false);
+  const [programs, setPrograms] = useState([]);
+  const [blogs, setBlogs] = useState([]);
+  const [stats, setStats] = useState({});
+  const [testimonials, setTestimonials] = useState([]);
+  
+  // State for the hero image slider
+  const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
 
-  const youthReached = useCountUp(backendStats.totalUsers || 1500);
-  const schoolsPartnered = useCountUp(backendStats.totalBlogs || 10);
-  const annualEvents = useCountUp(5);
-  const corePrograms = useCountUp(3);
+  // State for testimonial slider
+  const [currentTestimonialIndex, setCurrentTestimonialIndex] = useState(0);
 
-  // Fetch data from backend
   useEffect(() => {
-    const fetchData = async () => {
-      const [testimonialsData, programsData, statsData] = await Promise.all([
-        api.getTestimonials(),
+    (async () => {
+      const [p, b, s, t] = await Promise.all([
         api.getPrograms(),
-        api.getStats()
+        api.getBlogs(),
+        api.getStats(),
+        api.getTestimonials(),
       ]);
-      
-      if (testimonialsData.length > 0) {
-        setBackendTestimonials(testimonialsData);
-      }
-      if (programsData.length > 0) {
-        setBackendPrograms(programsData);
-      }
-      if (statsData) {
-        setBackendStats(statsData);
-      }
-      setDataLoaded(true);
-    };
-    fetchData();
+      setPrograms(p);
+      setBlogs(b);
+      setStats(s);
+      // Use API testimonials if available, otherwise fallback to the 6 local ones
+      setTestimonials(t.length > 0 ? t : fallbackTestimonials);
+    })();
   }, []);
 
-  // Use backend testimonials if available, otherwise use static ones
-  const activeTestimonials = backendTestimonials.length > 0 ? backendTestimonials : [
-    { name: "Mukeshimana Kevin", role: "RLG Club Member at ESSA NYARUGUNGA 2026", text: "RLG transformed my leadership journey. The mentorship I received helped me gain more public speaking skills!", rating: 5, initials: "MK" },
-    { name: "Joshua Chris. K", role: "Founder & Executive Director", text: "There is a gap in understanding the dynamics and mysteries of leadership responsibilities, especially in young people. RLG fills that gap.", rating: 5, initials: "JK" },
-    { name: "Dr. Amina Patel", role: "Lead Mentor", text: "Working with RLG fellows has been incredibly rewarding. These young leaders are truly shaping our future.", rating: 5, initials: "AP" },
-  ];
-
+  // Effect to cycle through hero images every 5 seconds
   useEffect(() => {
-    const id = setInterval(() => setCurrentTestimonial(p => (p + 1) % activeTestimonials.length), 5000);
-    return () => clearInterval(id);
-  }, [activeTestimonials.length]);
+    const interval = setInterval(() => {
+      setCurrentHeroIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const handleApply = () =>
-    showToast("Applications are open! Head to Get Involved to apply.", "success");
-  const handleWatch = () =>
-    showInfo("Watch Our Story", "Check out our video to see how RLG is transforming young leaders in Rwanda and beyond!");
-  const handleLearn = () =>
-    showInfo("About RLG", "We are dedicated to nurturing the next generation of leaders in Rwanda through mentorship, training, and real-world projects.");
-  
-  // Updated newsletter handler with backend API
-  const handleNewsletter = async (e) => {
-    e.preventDefault();
-    if (!email) return showToast("Please enter your email address.", "warning");
-    
-    try {
-      await api.subscribeNewsletter(email);
-      showSuccess("Subscribed! 🎉", "Thank you for joining our newsletter. You'll receive updates about leadership programs and events!");
-      setEmail("");
-    } catch (error) {
-      showToast(error.message || "Subscription failed. Please try again.", "error");
-    }
-  };
-  
-  const handleDonate = () => {
-    showInfo("Support RLG", "Your donation helps us empower more young leaders across Rwanda.");
+  // Effect to cycle through testimonials every 6 seconds
+  useEffect(() => {
+    if (testimonials.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentTestimonialIndex((prevIndex) => (prevIndex + 1) % testimonials.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [testimonials]);
+
+  const displayPrograms =
+    programs.length > 0
+      ? programs.slice(0, 3).map((p, i) => ({
+          ...fallbackPrograms[i % fallbackPrograms.length],
+          ...p,
+        }))
+      : fallbackPrograms;
+
+  const currentTestimonial = testimonials[currentTestimonialIndex] || fallbackTestimonials[0];
+
+  const handleVolunteer = () => {
+    Swal.fire({
+      icon: "info",
+      title: "Become A Volunteer",
+      text: "Thank you for your interest! We'll be in touch soon.",
+      confirmButtonColor: "#2F6B4F",
+    });
   };
 
-  // Get the current testimonial text
-  const currentTestimonialData = activeTestimonials[currentTestimonial] || activeTestimonials[0];
+  const handleWatchVideo = () => {
+    Swal.fire({
+      icon: "info",
+      title: "Watch Our Video",
+      text: "Video player coming soon.",
+      confirmButtonColor: "#2F6B4F",
+    });
+  };
 
   return (
-    <div className="rlg-home pt-16">
+    <>
       <style>{`
-        /* ── Reset & tokens ── */
-        .rlg-home { font-family: 'Lato', 'Segoe UI', sans-serif; color: #1a1a1a; }
-        :root {
-          --green-900: #14532d;
-          --green-800: #166534;
-          --green-700: #15803d;
-          --green-600: #16a34a;
-          --green-500: #22c55e;
-          --green-400: #4ade80;
-          --green-100: #dcfce7;
-          --green-50:  #f0fdf4;
-          --cream:     #fafaf8;
-          --shadow-sm: 0 2px 8px rgba(21,128,61,.10);
-          --shadow-md: 0 8px 30px rgba(21,128,61,.15);
-          --shadow-lg: 0 20px 60px rgba(21,128,61,.20);
-          --radius:    1rem;
-          --transition: .3s cubic-bezier(.4,0,.2,1);
+        /* ============================================================
+           HOME PAGE — matches HTML exactly
+           ============================================================ */
+        :root{
+          --navy:#152B3A;
+          --navy-deep:#0F212D;
+          --green:#2F6B4F;
+          --green-deep:#234F3B;
+          --green-light:#8FC1A3;
+          --green-bright:#3F8C63;
+          --gold:#F2C94C;
+          --gold-hover:#E0B63A;
+          --paper:#FAF8F4;
+          --paper-dim:#F1EDE3;
+          --line:#E4DFD3;
+          --text:#3A3F42;
+          --text-soft:#6B7178;
         }
 
-        /* ── Animations ── */
-        @keyframes fadeUp   { from { opacity:0; transform:translateY(30px) } to { opacity:1; transform:none } }
-        @keyframes fadeIn   { from { opacity:0 } to { opacity:1 } }
-        @keyframes pulse    { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
-        @keyframes floatBob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-        @keyframes shimmer  { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
-        @keyframes spin     { to{transform:rotate(360deg)} }
-        @keyframes glow     { 0%,100%{box-shadow:0 0 5px rgba(34,197,94,.3)} 50%{box-shadow:0 0 20px rgba(34,197,94,.6)} }
-
-        .fade-up   { animation: fadeUp .7s both; }
-        .fade-up-1 { animation: fadeUp .7s .1s both; }
-        .fade-up-2 { animation: fadeUp .7s .2s both; }
-        .fade-up-3 { animation: fadeUp .7s .3s both; }
-        .float { animation: floatBob 4s ease-in-out infinite; }
-
-        /* ── Layout ── */
-        .rlg-container { max-width: 1200px; margin: 0 auto; padding: 0 1.25rem; }
-
-        /* ── Hero ── */
-        .rlg-hero {
-          position: relative; min-height: 90vh; display: flex; align-items: center;
-          background: linear-gradient(135deg, #0a2a1a 0%, #14532d 100%);
-          overflow: hidden;
+        .hm-page{
+          background:var(--paper);
+          color:var(--text);
+          font-family:'Inter', system-ui, -apple-system, sans-serif;
+          font-size:16px;
+          line-height:1.5;
         }
-        .rlg-hero::before {
-          content:''; position:absolute; inset:0;
-          background: url(${heroBg}) center/cover no-repeat;
-          opacity:.12;
+        .hm-page *{ box-sizing:border-box; }
+        .hm-page img{ max-width:100%; display:block; }
+
+        .hm-container{
+          max-width:1280px;
+          margin:0 auto;
+          padding:0 48px;
         }
-        .rlg-hero-grid { display: grid; grid-template-columns:1fr 1fr; gap:4rem; align-items:center; position:relative; z-index:2; padding:5rem 0; }
-        @media(max-width:768px){ .rlg-hero-grid{grid-template-columns:1fr;gap:2rem;padding:3rem 0;text-align:center;} }
-        .rlg-hero-badge {
-          display:inline-flex;align-items:center;gap:.5rem;
-          background:rgba(255,255,255,.12);backdrop-filter:blur(8px);
-          border:1px solid rgba(255,255,255,.2);border-radius:999px;
-          padding:.4rem 1rem;margin-bottom:1.5rem;color:#fff;font-size:.85rem;
+        .hm-section{
+          padding:100px 0;
+          position:relative;
         }
-        .rlg-hero h1 { font-family:'Playfair Display',Georgia,serif; font-size:clamp(2.4rem,5vw,3.8rem); font-weight:800; color:#fff; line-height:1.15; margin-bottom:1.2rem; }
-        .rlg-hero h1 span { background: linear-gradient(135deg, #4ade80, #22c55e); -webkit-background-clip: text; background-clip: text; color: transparent; display:block; }
-        .rlg-hero p { color:rgba(255,255,255,.85); font-size:1.1rem; line-height:1.7; margin-bottom:2rem; max-width:520px; }
-        @media(max-width:768px){ .rlg-hero p{ margin:0 auto 2rem; } }
-        
-        /* ── Enhanced Buttons ── */
-        .rlg-hero-buttons { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
-        @media(max-width:768px){ .rlg-hero-buttons { justify-content: center; } }
-        
-        .btn-primary-rlg {
-          display:inline-flex;align-items:center;gap:.6rem;
-          background: linear-gradient(135deg, #22c55e, #16a34a);
-          color:#fff;
-          padding:.9rem 2rem;
-          border-radius:999px;
+
+        .hm-eyebrow{
+          display:inline-flex;
+          align-items:center;
+          gap:8px;
+          font-size:12.5px;
           font-weight:700;
-          font-size:1rem;
-          border:none;
-          cursor:pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 4px 20px rgba(34,197,94,0.3);
-          position: relative;
-          overflow: hidden;
-        }
-        .btn-primary-rlg::before {
-          content: '';
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 0;
-          height: 0;
-          border-radius: 50%;
-          background: rgba(255,255,255,0.3);
-          transform: translate(-50%, -50%);
-          transition: width 0.6s, height 0.6s;
-        }
-        .btn-primary-rlg:hover::before {
-          width: 300px;
-          height: 300px;
-        }
-        .btn-primary-rlg:hover {
-          transform: translateY(-3px);
-          box-shadow: 0 8px 30px rgba(34,197,94,0.5);
-        }
-        .btn-primary-rlg:active {
-          transform: translateY(0);
-        }
-        
-        .btn-outline-rlg {
-          display:inline-flex;align-items:center;gap:.6rem;
-          background:transparent;
-          color:#fff;
-          padding:.9rem 2rem;
-          border-radius:999px;
-          font-weight:700;
-          font-size:1rem;
-          border:2px solid rgba(255,255,255,0.5);
-          cursor:pointer;
-          transition: all 0.3s ease;
-          position: relative;
-          overflow: hidden;
-        }
-        .btn-outline-rlg:hover {
-          background:rgba(255,255,255,0.15);
-          border-color:#fff;
-          transform:translateY(-2px);
-          box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-        }
-        
-        .btn-white-rlg {
-          display:inline-flex;align-items:center;gap:.6rem;
-          background:#fff;
-          color:#14532d;
-          padding:.9rem 2rem;
-          border-radius:999px;
-          font-weight:700;
-          font-size:1rem;
-          border:none;
-          cursor:pointer;
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        .btn-white-rlg:hover {
-          transform:translateY(-2px);
-          box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-          background: #f0fdf4;
-        }
-        
-        .btn-ghost-rlg {
-          display:inline-flex;align-items:center;gap:.5rem;
-          background:transparent;
-          color:#15803d;
-          padding:.7rem 1.5rem;
-          border-radius:999px;
-          font-weight:600;
-          font-size:.9rem;
-          border:2px solid #15803d;
-          cursor:pointer;
-          transition: all 0.3s ease;
-        }
-        .btn-ghost-rlg:hover {
-          background:#15803d;
-          color:#fff;
-          transform:translateY(-2px);
-          gap:.8rem;
-        }
-        
-        .rlg-hero-links { display: flex; gap: 1.5rem; flex-wrap: wrap; color: rgba(255,255,255,.7); font-size: .9rem; }
-        .rlg-hero-links a { color: #4ade80; text-decoration: none; transition: color .3s; }
-        .rlg-hero-links a:hover { color: #fff; }
-        
-        /* ── Trust Indicators ── */
-        .rlg-trust { display:flex;flex-wrap:wrap;gap:1rem;margin-top:1.5rem; }
-        @media(max-width:768px){ .rlg-trust{justify-content:center;} }
-        .rlg-trust-item { display:flex;align-items:center;gap:.4rem;color:rgba(255,255,255,.8);font-size:.85rem; }
-        .rlg-trust-item svg { color:#4ade80; }
-
-        .rlg-hero-img-wrap { position:relative; }
-        .rlg-hero-img-wrap img {
-          width:100%;border-radius:var(--radius);box-shadow:var(--shadow-lg);
-          max-height:460px;object-fit:cover;
-        }
-        .rlg-hero-img-wrap::before {
-          content:'';position:absolute;inset:-12px;border-radius:calc(var(--radius)+12px);
-          border:2px solid rgba(34,197,94,.25);z-index:-1;
-        }
-        .rlg-hero-card {
-          position:absolute;bottom:-1.2rem;left:-1.2rem;
-          background:#fff;border-radius:.75rem;padding:1rem 1.25rem;
-          box-shadow:var(--shadow-md);display:flex;align-items:center;gap:.75rem;
-          animation:fadeUp .7s .5s both;
-        }
-        @media(max-width:768px){ .rlg-hero-card{display:none;} }
-        .rlg-hero-card-dot { width:2.5rem;height:2.5rem;border-radius:50%;background:linear-gradient(135deg, #22c55e, #16a34a);display:flex;align-items:center;justify-content:center;flex-shrink:0; }
-        .rlg-hero-card b { display:block;font-size:1rem;color:var(--green-800); }
-        .rlg-hero-card span { font-size:.75rem;color:#666; }
-
-        /* ── Stats Cards ── */
-        .rlg-stats { background:#fff; padding:4rem 0; }
-        .rlg-stats-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem; }
-        @media(max-width:640px){ .rlg-stats-grid{grid-template-columns:1fr 1fr;} }
-        .rlg-stat-card {
-          text-align:center;padding:2rem 1rem;border-radius:var(--radius);
-          border:1px solid #e5e7eb;transition:var(--transition);position:relative;overflow:hidden;
-          background:#fff;
-        }
-        .rlg-stat-card::before {
-          content:'';position:absolute;bottom:0;left:0;right:0;height:4px;
-          background:linear-gradient(90deg, #22c55e, #16a34a);
-          transform:scaleX(0);transform-origin:left;transition:var(--transition);
-        }
-        .rlg-stat-card:hover { box-shadow:var(--shadow-md);transform:translateY(-6px); }
-        .rlg-stat-card:hover::before { transform:scaleX(1); }
-        .rlg-stat-icon { 
-          width:4rem;height:4rem;border-radius:50%;background:linear-gradient(135deg, #dcfce7, #f0fdf4);
-          display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;
-          transition:var(--transition);
-        }
-        .rlg-stat-card:hover .rlg-stat-icon { background:linear-gradient(135deg, #22c55e, #16a34a); transform:scale(1.1); }
-        .rlg-stat-card:hover .rlg-stat-icon svg { color:#fff !important; }
-        .rlg-stat-num { font-family:'Playfair Display',Georgia,serif;font-size:2.5rem;font-weight:800;background:linear-gradient(135deg, #14532d, #22c55e);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1; }
-        .rlg-stat-label { color:#6b7280;font-size:.9rem;margin-top:.4rem;font-weight:600; }
-
-        /* ── Section Label ── */
-        .rlg-label {
-          display:inline-flex;align-items:center;gap:.5rem;
-          background:linear-gradient(135deg, #dcfce7, #f0fdf4);
-          color:#14532d;
-          padding:.5rem 1.25rem;
-          border-radius:999px;
-          font-size:.8rem;
-          font-weight:700;
-          letter-spacing:.05em;
+          letter-spacing:0.12em;
           text-transform:uppercase;
-          margin-bottom:1rem;
-          border:1px solid rgba(34,197,94,0.3);
+          color:var(--green);
+          margin-bottom:16px;
         }
-        .rlg-section-title { font-family:'Playfair Display',Georgia,serif;font-size:clamp(1.8rem,3vw,2.6rem);font-weight:800;color:#111;margin-bottom:.75rem; }
-        .rlg-section-sub { color:#6b7280;font-size:1rem;line-height:1.7;max-width:580px; }
-
-        /* ── Mission Quote ── */
-        .rlg-mission-quote {
-          background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-          border-left: 4px solid #22c55e;
-          padding: 2rem;
-          border-radius: var(--radius);
-          margin: 2rem 0;
-          font-style: italic;
-          box-shadow: var(--shadow-sm);
-        }
-        .rlg-mission-quote p { font-size: 1.1rem; line-height: 1.8; color: #14532d; margin-bottom: .5rem; }
-        .rlg-mission-quote cite { color: #16a34a; font-weight: 600; font-style: normal; }
-
-        /* ── Service Cards ── */
-        .rlg-services { background: #fff; padding: 5rem 0; }
-        .rlg-services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 3rem; }
-        @media(max-width: 900px) { .rlg-services-grid { grid-template-columns: 1fr; gap: 1.5rem; } }
-        .rlg-service-card {
-          background: #fff;
-          border-radius: var(--radius);
-          padding: 2rem;
-          box-shadow: var(--shadow-sm);
-          border: 1px solid #e5e7eb;
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-          text-align: center;
-          position: relative;
-          overflow: hidden;
-        }
-        .rlg-service-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(34,197,94,0.1), transparent);
-          transition: left 0.6s;
-        }
-        .rlg-service-card:hover::before {
-          left: 100%;
-        }
-        .rlg-service-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-lg); border-color: #22c55e; }
-        .rlg-service-icon {
-          width: 5rem; height: 5rem; background: linear-gradient(135deg, #22c55e, #16a34a);
-          border-radius: 1.5rem; display: flex; align-items: center; justify-content: center;
-          margin: 0 auto 1.5rem;
-          transition: all 0.3s ease;
-          box-shadow: 0 8px 20px rgba(34,197,94,0.3);
-        }
-        .rlg-service-card:hover .rlg-service-icon {
-          transform: scale(1.1) rotate(5deg);
-          box-shadow: 0 12px 30px rgba(34,197,94,0.4);
-        }
-        .rlg-service-icon svg { color: #fff; font-size: 1.8rem; }
-        .rlg-service-card h3 { font-weight: 800; font-size: 1.3rem; margin-bottom: .75rem; color: #14532d; }
-        .rlg-service-card p { color: #6b7280; font-size: .9rem; line-height: 1.6; margin-bottom: 1rem; }
-        .rlg-service-badges { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center; margin: 1rem 0; }
-        .rlg-service-badge {
-          background: linear-gradient(135deg, #dcfce7, #f0fdf4);
-          color: #14532d;
-          padding: .3rem .8rem;
-          border-radius: 999px;
-          font-size: .7rem;
-          font-weight: 600;
+        .hm-eyebrow .dot{
+          width:6px; height:6px;
+          border-radius:50%;
+          background:var(--gold);
         }
 
-        /* ── Values Cards ── */
-        .rlg-values { background: linear-gradient(135deg, #f0fdf4, #ffffff); padding: 5rem 0; }
-        .rlg-values-grid {
-          display: grid;
-          grid-template-columns: repeat(5, 1fr);
-          gap: 1.5rem;
-          margin-top: 3rem;
+        .hm-section-head{
+          max-width:640px;
+          margin-bottom:56px;
         }
-        @media(max-width: 1024px) { .rlg-values-grid { grid-template-columns: repeat(3, 1fr); } }
-        @media(max-width: 768px) { .rlg-values-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media(max-width: 480px) { .rlg-values-grid { grid-template-columns: 1fr; } }
-        .rlg-value-card {
-          background: #fff;
-          border-radius: var(--radius);
-          padding: 1.5rem;
-          text-align: center;
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-          border: 1px solid #e5e7eb;
-          position: relative;
-          overflow: hidden;
+        .hm-section-head.center{
+          margin-left:auto;
+          margin-right:auto;
+          text-align:center;
         }
-        .rlg-value-card::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 3px;
-          background: linear-gradient(90deg, #22c55e, #16a34a);
-          transform: scaleX(0);
-          transform-origin: left;
-          transition: transform 0.3s ease;
+        .hm-section-head h2{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-weight:600;
+          font-size:clamp(32px, 3.5vw, 44px);
+          line-height:1.15;
+          letter-spacing:-0.02em;
+          color:var(--navy);
+          margin-bottom:16px;
         }
-        .rlg-value-card:hover::after {
-          transform: scaleX(1);
-        }
-        .rlg-value-card:hover {
-          transform: translateY(-6px);
-          box-shadow: var(--shadow-md);
-          border-color: #22c55e;
-        }
-        .rlg-value-icon {
-          width: 4rem;
-          height: 4rem;
-          background: linear-gradient(135deg, #22c55e, #16a34a);
-          border-radius: 1rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto 1rem;
-          transition: all 0.3s ease;
-        }
-        .rlg-value-card:hover .rlg-value-icon {
-          transform: scale(1.1) rotate(-5deg);
-          box-shadow: 0 8px 20px rgba(34,197,94,0.3);
-        }
-        .rlg-value-icon svg { color: #fff; font-size: 1.5rem; }
-        .rlg-value-card h3 { font-weight: 700; font-size: 1rem; margin-bottom: 0.5rem; color: #14532d; }
-        .rlg-value-card p { font-size: 0.75rem; color: #6b7280; line-height: 1.4; }
-
-        /* ── Blog Cards ── */
-        .rlg-blog { background: #fff; padding: 5rem 0; }
-        .rlg-blog-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; margin-top: 3rem; }
-        @media(max-width: 768px) { .rlg-blog-grid { grid-template-columns: 1fr; } }
-        .rlg-blog-card {
-          background: #fff;
-          border-radius: var(--radius);
-          padding: 2rem;
-          box-shadow: var(--shadow-sm);
-          border: 1px solid #e5e7eb;
-          transition: all 0.4s ease;
-        }
-        .rlg-blog-card:hover {
-          transform: translateY(-5px);
-          box-shadow: var(--shadow-lg);
-          border-color: #22c55e;
-        }
-        .rlg-blog-date { color: #16a34a; font-size: .8rem; margin-bottom: .5rem; display: flex; align-items: center; gap: .5rem; font-weight: 600; }
-        .rlg-blog-card h3 { font-weight: 800; font-size: 1.2rem; margin-bottom: .75rem; color: #14532d; }
-        .rlg-blog-card p { color: #6b7280; font-size: .9rem; line-height: 1.6; margin-bottom: 1rem; }
-
-        /* ── Testimonials ── */
-        .rlg-testimonials { background: linear-gradient(135deg, #14532d, #0a2a1a); padding: 5rem 0; }
-        .rlg-testi-card {
-          background: #fff;
-          border-radius: var(--radius);
-          padding: 2.5rem;
-          box-shadow: var(--shadow-lg);
-          max-width: 780px;
-          margin: 2.5rem auto 0;
-          transition: transform 0.3s ease;
-        }
-        .rlg-testi-card:hover {
-          transform: scale(1.02);
-        }
-        .rlg-testi-quote { color: #22c55e; font-size: 2.5rem; margin-bottom: 1rem; opacity: .5; }
-        .rlg-testimonials .rlg-section-title { color: #fff; }
-        .rlg-testimonials .rlg-section-sub { color: rgba(255,255,255,.7); }
-        .rlg-testi-dot {
-          width: .5rem;
-          height: .5rem;
-          border-radius: 999px;
-          background: #d1d5db;
-          border: none;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-        .rlg-testi-dot.active {
-          width: 1.5rem;
-          background: #22c55e;
+        .hm-section-head p{
+          font-size:16px;
+          color:var(--text-soft);
+          line-height:1.7;
         }
 
-        /* ── Vision Section ── */
-        .rlg-vision { background: linear-gradient(135deg, #0a2a1a, #14532d); padding: 5rem 0; text-align: center; color: #fff; }
-        .rlg-vision h2 { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(1.8rem, 3vw, 2.5rem); margin-bottom: 1rem;color: #fff }
-        .rlg-vision p { max-width: 700px; margin: 0 auto 2rem; color: rgba(255,255,255,.8); }
-        .rlg-vision-stats { display: flex; justify-content: center; gap: 3rem; flex-wrap: wrap; margin-top: 2rem; }
-        .rlg-vision-stat { text-align: center; }
-        .rlg-vision-stat .number { font-size: 2.5rem; font-weight: 800; font-family: 'Playfair Display', serif; display: block; background: linear-gradient(135deg, #4ade80, #22c55e); -webkit-background-clip: text; background-clip: text; color: transparent; }
-
-        /* ── Newsletter ── */
-        .rlg-newsletter { background: #f0fdf4; padding: 5rem 0; }
-        .rlg-newsletter-box {
-          background: linear-gradient(135deg, #14532d, #0a2a1a);
-          border-radius: 1.5rem;
-          padding: 3.5rem 2.5rem;
-          text-align: center;
-          position: relative;
-          overflow: hidden;
+        /* ---------- Hero ---------- */
+        .hm-hero{
+          position:relative;
+          min-height:100vh;
+          display:flex;
+          align-items:center;
+          background:var(--navy-deep);
+          overflow:hidden;
         }
-        .rlg-newsletter-form { display: flex; gap: .75rem; max-width: 440px; margin: 0 auto; }
-        @media(max-width: 560px) { .rlg-newsletter-form { flex-direction: column; } }
-        .rlg-newsletter-form input {
-          flex: 1;
-          padding: .9rem 1.25rem;
-          border-radius: 999px;
-          border: none;
-          font-size: .95rem;
-          outline: none;
-          transition: all 0.3s ease;
+        .hm-hero-bg{
+          position:absolute;
+          inset:0;
+          background-size:cover;
+          background-position:center;
+          z-index:0;
+          transition: background-image 1s ease-in-out;
         }
-        .rlg-newsletter-form input:focus {
-          box-shadow: 0 0 0 3px rgba(34,197,94,0.3);
+        .hm-hero-bg::after{
+          content:'';
+          position:absolute;
+          inset:0;
+          background:
+            linear-gradient(90deg, rgba(6, 126, 76, 0.75) 0%, hsla(152, 94%, 20%, 0.35) 40%, rgba(4, 101, 66, 0.05) 100%),
+            linear-gradient(180deg, rgba(4, 80, 45, 0.1) 0%, rgba(3, 24, 38, 0.6) 100%);
+          z-index:1;
+        }
+        .hm-hero::before{
+          content:'';
+          position:absolute;
+          top:-20%; left:-10%;
+          width:60%; height:80%;
+          background:radial-gradient(ellipse, hsla(156, 93%, 32%, 0.20), transparent 70%);
+          z-index:1;
+          pointer-events:none;
+        }
+        .hm-hero-inner{
+          position:relative;
+          z-index:2;
+          width:100%;
+          max-width:1400px;
+          margin:0 auto;
+          padding:140px 48px 100px;
+          display:grid;
+          grid-template-columns:1.4fr 0.9fr;
+          gap:64px;
+          align-items:center;
+        }
+        .hm-hero-left{ max-width:680px; }
+        .hm-hero-badge{
+          display:inline-flex;
+          align-items:center;
+          gap:8px;
+          font-size:13px;
+          font-weight:600;
+          letter-spacing:0.06em;
+          text-transform:uppercase;
+          color:#fff;
+          border:1px solid rgba(255,255,255,0.25);
+          background:rgba(255,255,255,0.08);
+          backdrop-filter:blur(8px);
+          padding:8px 16px;
+          border-radius:100px;
+          margin-bottom:28px;
+        }
+        .hm-hero-badge .dot{
+          width:7px; height:7px;
+          border-radius:50%;
+          background:var(--gold);
+          flex-shrink:0;
+        }
+        .hm-hero-left h1{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-weight:600;
+          font-size:clamp(40px, 5vw, 68px);
+          line-height:1.08;
+          color:#fff;
+          margin-bottom:24px;
+          letter-spacing:-0.02em;
+          text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+        }
+        .hm-hero-left h1 .accent{ color:var(--green-light); }
+        .hm-hero-left .lead{
+          font-size:clamp(16px, 1.3vw, 19px);
+          line-height:1.65;
+          color:rgba(255,255,255,0.95);
+          max-width:540px;
+          margin-bottom:40px;
+          text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+        }
+        .hm-hero-actions{
+          display:flex;
+          align-items:center;
+          gap:20px;
+          flex-wrap:wrap;
         }
 
-        /* ── CTA ── */
-        .rlg-cta { background: linear-gradient(135deg, #0a2a1a, #14532d); padding: 5rem 0; text-align: center; }
-        .rlg-cta h2 { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(1.8rem, 3vw, 2.5rem); margin-bottom: 1rem; color: #fff; }
-        .rlg-cta p { color: rgba(255,255,255,.8); max-width: 520px; margin: 0 auto 2rem; }
+        .hm-btn-gold{
+          display:inline-flex;
+          align-items:center;
+          gap:10px;
+          background:var(--gold);
+          color:var(--navy-deep);
+          font-size:15.5px;
+          font-weight:700;
+          padding:17px 32px;
+          border-radius:6px;
+          border:none;
+          cursor:pointer;
+          transition:background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+          box-shadow:0 8px 24px rgba(242,201,76,0.28);
+          font-family:'Inter', sans-serif;
+        }
+        .hm-btn-gold:hover{
+          background:var(--gold-hover);
+          transform:translateY(-2px);
+          box-shadow:0 12px 32px rgba(242,201,76,0.38);
+        }
+        .hm-btn-gold svg{ width:18px; height:18px; }
 
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Lato:wght@400;700&display=swap');
+        .hm-btn-video{
+          display:inline-flex;
+          align-items:center;
+          gap:14px;
+          background:transparent;
+          border:none;
+          cursor:pointer;
+          color:#fff;
+          font-size:15px;
+          font-weight:600;
+          font-family:'Inter', sans-serif;
+          padding:8px 0;
+          transition:opacity 0.2s ease;
+          text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+        }
+        .hm-btn-video:hover{ opacity:0.85; }
+        .hm-play-circle{
+          width:52px; height:52px;
+          border-radius:50%;
+          background:rgba(255,255,255,0.12);
+          border:1.5px solid rgba(255,255,255,0.35);
+          backdrop-filter:blur(8px);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          transition:background 0.2s ease, transform 0.2s ease;
+          flex-shrink:0;
+        }
+        .hm-btn-video:hover .hm-play-circle{
+          background:var(--green);
+          border-color:var(--green);
+          transform:scale(1.06);
+        }
+        .hm-play-circle svg{
+          width:16px; height:16px;
+          fill:#fff;
+          margin-left:3px;
+        }
+
+        .hm-stats-panel{
+          background:linear-gradient(160deg, rgba(47,107,79,0.92) 0%, rgba(15,33,45,0.92) 100%);
+          backdrop-filter:blur(16px);
+          border:1px solid rgba(255,255,255,0.12);
+          border-radius:12px;
+          padding:40px 36px;
+          box-shadow:0 24px 64px rgba(0,0,0,0.35);
+        }
+        .hm-panel-icon{
+          width:56px; height:56px;
+          border-radius:50%;
+          background:linear-gradient(135deg, var(--gold) 0%, #D4A93A 100%);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          margin-bottom:20px;
+          box-shadow:0 6px 20px rgba(242,201,76,0.35);
+        }
+        .hm-panel-icon svg{ width:26px; height:26px; }
+        .hm-stats-panel h3{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:24px;
+          font-weight:600;
+          color:#fff;
+          margin-bottom:10px;
+        }
+        .hm-panel-desc{
+          font-size:14.5px;
+          color:rgba(255,255,255,0.72);
+          line-height:1.6;
+          margin-bottom:28px;
+          padding-bottom:28px;
+          border-bottom:1px solid rgba(255,255,255,0.12);
+        }
+        .hm-stats-grid{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:24px;
+        }
+        .hm-stat-number{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:38px;
+          font-weight:700;
+          color:#fff;
+          line-height:1;
+          margin-bottom:8px;
+        }
+        .hm-stat-number .plus{ color:var(--gold); }
+        .hm-stat-label{
+          font-size:13.5px;
+          color:rgba(255,255,255,0.7);
+          line-height:1.45;
+        }
+
+        /* ---------- About ---------- */
+        .hm-about{ background:var(--paper); }
+        .hm-about-grid{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:80px;
+          align-items:center;
+        }
+        .hm-about-images{
+          position:relative;
+          height:560px;
+        }
+        .hm-about-img-main{
+          position:absolute;
+          top:0; left:0;
+          width:78%; height:420px;
+          border-radius:8px;
+          overflow:hidden;
+          box-shadow:0 24px 60px rgba(21,43,58,0.18);
+        }
+        .hm-about-img-main img{
+          width:100%; height:100%;
+          object-fit:cover;
+        }
+        .hm-about-img-secondary{
+          position:absolute;
+          bottom:0; right:0;
+          width:60%; height:300px;
+          border-radius:8px;
+          overflow:hidden;
+          border:6px solid var(--paper);
+          box-shadow:0 24px 60px rgba(21,43,58,0.22);
+        }
+        .hm-about-img-secondary img{
+          width:100%; height:100%;
+          object-fit:cover;
+        }
+        .hm-about-badge{
+          position:absolute;
+          top:340px; left:0;
+          background:var(--green);
+          color:#fff;
+          padding:16px 22px;
+          border-radius:8px;
+          box-shadow:0 12px 32px rgba(47,107,79,0.4);
+          z-index:3;
+        }
+        .hm-about-badge .num{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:30px;
+          font-weight:700;
+          line-height:1;
+          display:block;
+          margin-bottom:4px;
+        }
+        .hm-about-badge .lbl{
+          font-size:12.5px;
+          font-weight:600;
+          letter-spacing:0.04em;
+          opacity:0.9;
+          text-transform:uppercase;
+        }
+        .hm-about-content h2{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-weight:600;
+          font-size:clamp(30px, 3vw, 40px);
+          line-height:1.18;
+          letter-spacing:-0.02em;
+          color:var(--navy);
+          margin-bottom:20px;
+        }
+        .hm-about-content > p{
+          font-size:16px;
+          color:var(--text-soft);
+          line-height:1.75;
+          margin-bottom:32px;
+        }
+        .hm-about-features{
+          list-style:none;
+          display:flex;
+          flex-direction:column;
+          gap:20px;
+          margin-bottom:36px;
+          padding:0;
+        }
+        .hm-about-features li{
+          display:flex;
+          gap:16px;
+          align-items:flex-start;
+        }
+        .hm-about-features .icon{
+          width:40px; height:40px;
+          border-radius:8px;
+          background:rgba(47,107,79,0.1);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          flex-shrink:0;
+        }
+        .hm-about-features .icon svg{
+          width:20px; height:20px;
+          stroke:var(--green);
+          fill:none;
+          stroke-width:1.8;
+        }
+        .hm-about-features h4{
+          font-size:15.5px;
+          font-weight:600;
+          color:var(--navy);
+          margin-bottom:4px;
+        }
+        .hm-about-features p{
+          font-size:14px;
+          color:var(--text-soft);
+          line-height:1.55;
+        }
+        .hm-btn-green{
+          display:inline-flex;
+          align-items:center;
+          gap:10px;
+          background:var(--green);
+          color:#fff;
+          font-size:15px;
+          font-weight:700;
+          padding:15px 30px;
+          border-radius:6px;
+          border:none;
+          cursor:pointer;
+          text-decoration:none;
+          transition:background 0.2s ease, transform 0.15s ease;
+          box-shadow:0 6px 18px rgba(47,107,79,0.28);
+          font-family:'Inter', sans-serif;
+        }
+        .hm-btn-green:hover{
+          background:var(--green-bright);
+          transform:translateY(-2px);
+        }
+        .hm-btn-green svg{ width:16px; height:16px; }
+
+        /* ---------- Programs ---------- */
+        .hm-programs{
+          background:linear-gradient(180deg, var(--paper) 0%, var(--paper-dim) 100%);
+          position:relative;
+          overflow:hidden;
+        }
+        .hm-programs::before{
+          content:'';
+          position:absolute;
+          top:-10%; right:-10%;
+          width:50%; height:70%;
+          background:radial-gradient(ellipse, rgba(143,193,163,0.25), transparent 70%);
+          pointer-events:none;
+        }
+        .hm-programs-grid{
+          display:grid;
+          grid-template-columns:repeat(3, 1fr);
+          gap:28px;
+          position:relative;
+          z-index:1;
+        }
+        .hm-program-card{
+          background:#fff;
+          border:1px solid var(--line);
+          border-radius:12px;
+          overflow:hidden;
+          transition:transform 0.25s ease, box-shadow 0.25s ease;
+          display:flex;
+          flex-direction:column;
+        }
+        .hm-program-card:hover{
+          transform:translateY(-6px);
+          box-shadow:0 24px 48px rgba(21,43,58,0.14);
+        }
+        .hm-program-img{
+          height:220px;
+          overflow:hidden;
+          position:relative;
+        }
+        .hm-program-img img{
+          width:100%; height:100%;
+          object-fit:cover;
+          transition:transform 0.5s ease;
+        }
+        .hm-program-card:hover .hm-program-img img{
+          transform:scale(1.06);
+        }
+        .hm-program-tag{
+          position:absolute;
+          top:16px; left:16px;
+          background:rgba(15,33,45,0.85);
+          backdrop-filter:blur(8px);
+          color:#fff;
+          font-size:11.5px;
+          font-weight:700;
+          letter-spacing:0.08em;
+          text-transform:uppercase;
+          padding:6px 12px;
+          border-radius:100px;
+        }
+        .hm-program-body{
+          padding:28px 26px 30px;
+          flex:1;
+          display:flex;
+          flex-direction:column;
+        }
+        .hm-program-icon{
+          width:48px; height:48px;
+          border-radius:10px;
+          background:linear-gradient(135deg, rgba(47,107,79,0.12), rgba(63,140,99,0.08));
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          margin-bottom:18px;
+        }
+        .hm-program-icon svg{
+          width:24px; height:24px;
+          stroke:var(--green);
+          fill:none;
+          stroke-width:1.8;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+        .hm-program-icon img {
+          width: 24px;
+          height: 24px;
+          object-fit: contain;
+        }
+        .hm-program-card h3{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:20px;
+          font-weight:600;
+          color:var(--navy);
+          margin-bottom:10px;
+          line-height:1.3;
+        }
+        .hm-program-card p{
+          font-size:14.5px;
+          color:var(--text-soft);
+          line-height:1.65;
+          margin-bottom:22px;
+          flex:1;
+        }
+        .hm-program-link{
+          display:inline-flex;
+          align-items:center;
+          gap:6px;
+          font-size:14px;
+          font-weight:600;
+          color:var(--green);
+          text-decoration:none;
+          transition:gap 0.2s ease, color 0.2s ease;
+        }
+        .hm-program-link:hover{
+          gap:10px;
+          color:var(--green-bright);
+        }
+        .hm-program-link svg{
+          width:14px; height:14px;
+        }
+
+        /* ---------- Impact ---------- */
+        .hm-impact{
+          background:linear-gradient(135deg, var(--navy) 0%, var(--green-deep) 100%);
+          color:#fff;
+          position:relative;
+          overflow:hidden;
+        }
+        .hm-impact::before{
+          content:'';
+          position:absolute;
+          top:-50%; left:50%;
+          transform:translateX(-50%);
+          width:100%; height:200%;
+          background:radial-gradient(ellipse, rgba(143,193,163,0.15), transparent 60%);
+          pointer-events:none;
+        }
+        .hm-impact .hm-section-head h2{ color:#fff; }
+        .hm-impact .hm-section-head p{ color:rgba(255,255,255,0.7); }
+        .hm-impact .hm-eyebrow{ color:var(--green-light); }
+        .hm-impact-grid{
+          display:grid;
+          grid-template-columns:repeat(4, 1fr);
+          gap:32px;
+          position:relative;
+          z-index:1;
+        }
+        .hm-impact-item{
+          text-align:center;
+          padding:32px 16px;
+          border-radius:12px;
+          background:rgba(255,255,255,0.05);
+          border:1px solid rgba(255,255,255,0.1);
+          backdrop-filter:blur(8px);
+          transition:background 0.25s ease, transform 0.25s ease;
+        }
+        .hm-impact-item:hover{
+          background:rgba(255,255,255,0.09);
+          transform:translateY(-4px);
+        }
+        .hm-impact-item .icon{
+          width:52px; height:52px;
+          border-radius:50%;
+          background:rgba(242,201,76,0.15);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          margin:0 auto 18px;
+        }
+        .hm-impact-item .icon svg{
+          width:24px; height:24px;
+          stroke:var(--gold);
+          fill:none;
+          stroke-width:1.8;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+        .hm-impact-item .num{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:44px;
+          font-weight:700;
+          line-height:1;
+          color:#fff;
+          margin-bottom:10px;
+        }
+        .hm-impact-item .num .plus{ color:var(--gold); }
+        .hm-impact-item .lbl{
+          font-size:14px;
+          color:rgba(255,255,255,0.7);
+          line-height:1.5;
+        }
+
+        /* ---------- Story / Testimonials ---------- */
+        .hm-story{ background:var(--paper); }
+        .hm-story-grid{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:0;
+          border-radius:16px;
+          overflow:hidden;
+          box-shadow:0 24px 64px rgba(21,43,58,0.14);
+        }
+        .hm-story-img{
+          min-height:520px;
+          background-size:cover;
+          background-position:center;
+          position:relative;
+        }
+        .hm-story-img::after{
+          content:'';
+          position:absolute;
+          inset:0;
+          background:linear-gradient(180deg, rgba(15,33,45,0.2) 0%, rgba(35,79,59,0.65) 100%);
+        }
+        .hm-story-content{
+          background:#fff;
+          padding:64px 56px;
+          display:flex;
+          flex-direction:column;
+          justify-content:center;
+          transition: opacity 0.4s ease;
+        }
+        .hm-story-content .quote-mark{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:72px;
+          line-height:0.6;
+          color:var(--green-light);
+          margin-bottom:12px;
+        }
+        .hm-story-content blockquote{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:22px;
+          font-weight:500;
+          line-height:1.55;
+          color:var(--navy);
+          font-style:italic;
+          margin-bottom:28px;
+          min-height:140px;
+        }
+        .hm-story-author{
+          display:flex;
+          align-items:center;
+          gap:14px;
+        }
+        .hm-story-author .avatar{
+          width:52px; height:52px;
+          border-radius:50%;
+          overflow:hidden;
+          flex-shrink:0;
+          border:2px solid var(--green-light);
+        }
+        .hm-story-author .avatar img{
+          width:100%; height:100%;
+          object-fit:cover;
+        }
+        .hm-story-author .name{
+          font-size:15px;
+          font-weight:700;
+          color:var(--navy);
+        }
+        .hm-story-author .role{
+          font-size:13.5px;
+          color:var(--text-soft);
+        }
+
+        /* Testimonial dots */
+        .hm-story-dots{
+          display:flex;
+          justify-content:center;
+          gap:10px;
+          margin-top:32px;
+        }
+        .hm-story-dots button{
+          width:10px; height:10px;
+          border-radius:50%;
+          border:none;
+          background:var(--line);
+          cursor:pointer;
+          padding:0;
+          transition:background 0.2s ease, transform 0.2s ease;
+        }
+        .hm-story-dots button.active{
+          background:var(--green);
+          transform:scale(1.2);
+        }
+        .hm-story-dots button:hover{
+          background:var(--green-bright);
+        }
+
+        /* ---------- CTA ---------- */
+        .hm-cta{
+          background:linear-gradient(135deg, var(--green) 0%, var(--green-deep) 100%);
+          position:relative;
+          overflow:hidden;
+          padding:80px 0;
+        }
+        .hm-cta::before{
+          content:'';
+          position:absolute;
+          top:-60%; right:-10%;
+          width:60%; height:220%;
+          background:radial-gradient(ellipse, rgba(242,201,76,0.15), transparent 65%);
+          pointer-events:none;
+        }
+        .hm-cta-inner{
+          position:relative;
+          z-index:1;
+          text-align:center;
+          max-width:720px;
+          margin:0 auto;
+        }
+        .hm-cta h2{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-weight:600;
+          font-size:clamp(30px, 3.5vw, 42px);
+          line-height:1.2;
+          letter-spacing:-0.02em;
+          color:#fff;
+          margin-bottom:18px;
+        }
+        .hm-cta p{
+          font-size:16.5px;
+          color:rgba(255,255,255,0.82);
+          line-height:1.7;
+          margin-bottom:36px;
+        }
+        .hm-cta-actions{
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          gap:16px;
+          flex-wrap:wrap;
+        }
+        .hm-btn-white{
+          display:inline-flex;
+          align-items:center;
+          gap:10px;
+          background:#fff;
+          color:var(--green-deep);
+          font-size:15.5px;
+          font-weight:700;
+          padding:16px 32px;
+          border-radius:6px;
+          border:none;
+          cursor:pointer;
+          text-decoration:none;
+          transition:transform 0.15s ease, box-shadow 0.2s ease;
+          box-shadow:0 8px 24px rgba(0,0,0,0.15);
+          font-family:'Inter', sans-serif;
+        }
+        .hm-btn-white:hover{
+          transform:translateY(-2px);
+          box-shadow:0 12px 32px rgba(0,0,0,0.22);
+        }
+        .hm-btn-outline-white{
+          display:inline-flex;
+          align-items:center;
+          gap:10px;
+          background:transparent;
+          color:#fff;
+          font-size:15.5px;
+          font-weight:600;
+          padding:16px 32px;
+          border-radius:6px;
+          border:1.5px solid rgba(255,255,255,0.4);
+          cursor:pointer;
+          text-decoration:none;
+          transition:background 0.2s ease, border-color 0.2s ease;
+          font-family:'Inter', sans-serif;
+        }
+        .hm-btn-outline-white:hover{
+          background:rgba(255,255,255,0.1);
+          border-color:rgba(255,255,255,0.7);
+        }
+
+        /* ---------- Responsive ---------- */
+        @media (max-width: 1024px){
+          .hm-container{ padding:0 32px; }
+          .hm-hero-inner{
+            grid-template-columns:1fr;
+            gap:48px;
+            padding:120px 32px 80px;
+          }
+          .hm-stats-panel{ max-width:520px; }
+          .hm-about-grid{ grid-template-columns:1fr; gap:56px; }
+          .hm-about-images{ height:480px; }
+          .hm-programs-grid{ grid-template-columns:repeat(2, 1fr); }
+          .hm-impact-grid{ grid-template-columns:repeat(2, 1fr); }
+          .hm-story-grid{ grid-template-columns:1fr; }
+          .hm-story-img{ min-height:320px; }
+        }
+        @media (max-width: 640px){
+          .hm-container{ padding:0 22px; }
+          .hm-section{ padding:72px 0; }
+          .hm-hero-inner{ padding:110px 22px 70px; }
+          .hm-hero-actions{ flex-direction:column; align-items:flex-start; gap:16px; }
+          .hm-btn-gold{ width:100%; justify-content:center; }
+          .hm-stats-panel{ padding:30px 24px; }
+          .hm-stats-grid{ gap:20px; }
+          .hm-stat-number{ font-size:32px; }
+          .hm-about-images{ height:400px; }
+          .hm-about-img-main{ height:320px; }
+          .hm-about-img-secondary{ height:220px; }
+          .hm-about-badge{ top:260px; }
+          .hm-programs-grid{ grid-template-columns:1fr; }
+          .hm-impact-grid{ grid-template-columns:1fr 1fr; gap:16px; }
+          .hm-impact-item{ padding:24px 12px; }
+          .hm-impact-item .num{ font-size:34px; }
+          .hm-story-content{ padding:40px 28px; }
+          .hm-story-content blockquote{ font-size:18px; min-height:auto; }
+          .hm-cta-actions{ flex-direction:column; }
+          .hm-btn-white, .hm-btn-outline-white{ width:100%; justify-content:center; }
+        }
+        @media (prefers-reduced-motion: reduce){
+          .hm-page *{ transition:none !important; animation:none !important; }
+        }
       `}</style>
 
-      {/* HERO SECTION */}
-      <section className="rlg-hero">
-        <div className="rlg-container">
-          <div className="rlg-hero-grid">
-            <div className="fade-up">
-              <div className="rlg-hero-badge">
-                <FontAwesomeIcon icon={faStarHalfAlt} />
-                <span>RLG RWANDA</span>
+      <div className="hm-page">
+
+        {/* ============ HERO ============ */}
+        <section className="hm-hero" id="home">
+          <div 
+            className="hm-hero-bg" 
+            style={{ backgroundImage: `url(${heroImages[currentHeroIndex]})` }}
+          ></div>
+
+          <div className="hm-hero-inner">
+            <div className="hm-hero-left">
+              <div className="hm-hero-badge">
+                <span className="dot"></span>
+                BRIGHT FUTURE STARTS NOW
               </div>
+
               <h1>
-                Lead and Empower
-                <span>For Change</span>
+                Lead and Empower<br />
+                for  <span className="accent">Change</span>
               </h1>
-              <p><strong>Raising Leaders of Generation (RLG)</strong> nurtures visionary, action-driven young people through social impact, mental transformation, and moral integrity.</p>
-              
-              <div className="rlg-hero-buttons">
-                <button className="btn-primary-rlg" onClick={handleApply}>
-                  <FontAwesomeIcon icon={faRocket} /> Our Programs
+
+              <p className="lead">
+                Raising Leaders of Generation (RLG) nurtures visionary, action-driven young
+                people through social impact, mental transformation, and moral integrity.
+              </p>
+
+              <div className="hm-hero-actions">
+                <button className="hm-btn-gold" onClick={handleVolunteer}>
+                  Become A Volunteer
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M7 17L17 7M17 7H8M17 7V16" />
+                  </svg>
                 </button>
-                <button className="btn-outline-rlg" onClick={handleDonate}>
-                  <FontAwesomeIcon icon={faHeart} /> Donate Now
+
+                <button className="hm-btn-video" onClick={handleWatchVideo}>
+                  <span className="hm-play-circle">
+                    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                  </span>
+                  Watch Our Video
                 </button>
-                <Link to="/getinvolved">
-                  <button className="btn-outline-rlg">
-                    <FontAwesomeIcon icon={faHandshake} /> Get Involved
-                  </button>
+              </div>
+            </div>
+
+           <aside className="hm-stats-panel">
+  <div className="hm-panel-icon">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#152B3A"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="8" r="3.2" />
+      <path d="M4 20c0-3.5 3.6-6 8-6s8 2.5 8 6" />
+      <circle cx="18" cy="8" r="2" opacity="0.5" />
+      <circle cx="6" cy="8" r="2" opacity="0.5" />
+    </svg>
+  </div>
+
+  <h3>Leadership Note</h3>
+  <p className="hm-panel-desc">
+    Guided by a clear vision and unwavering commitment, our leadership inspires collective action and lasting change.
+  </p>
+
+  <div className="hm-stats-grid">
+    <div className="stat-item">
+      <div className="hm-stat-number">
+        5<span className="plus">+</span>
+      </div>
+      <div className="hm-stat-label">Years of Dedicated Leadership</div>
+    </div>
+    <div className="stat-item">
+      <div className="hm-stat-number">
+        50<span className="plus">+</span>
+      </div>
+      <div className="hm-stat-label">Strategic Initiatives Led</div>
+    </div>
+  </div>
+</aside>
+          </div>
+        </section>
+
+        {/* ============ ABOUT ============ */}
+        <section className="hm-section hm-about" id="about">
+          <div className="hm-container">
+            <div className="hm-about-grid">
+
+              <div className="hm-about-images">
+                <div className="hm-about-img-main">
+                   <img
+  src={volimg}
+  alt="Community outreach"
+/>
+                
+                </div>
+                <div className="hm-about-img-secondary">
+                 <img
+  src={aboutImage}
+  alt="Community outreach"
+/>
+                </div>
+                <div className="hm-about-badge">
+                  <span className="num">3+</span>
+                  <span className="lbl">Years of Service</span>
+                </div>
+              </div>
+
+              <div className="hm-about-content">
+                <span className="hm-eyebrow"><span className="dot"></span> About Us</span>
+               <h2>Guided by vision, driven by integrity.</h2>
+<p>
+  Our leadership is built on a simple belief: real change starts with
+  accountable, compassionate people. We bring together experienced
+  mentors and emerging voices who lead with humility, listen first,
+  and stay committed for the long haul.
+</p>
+
+<ul className="hm-about-features">
+  <li>
+    <span className="icon">
+      <svg viewBox="0 0 24 24">
+        <path
+          d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </span>
+    <div>
+      <h4>Purpose-Led Direction</h4>
+      <p>Every decision starts with the communities we serve, not the other way around.</p>
+    </div>
+  </li>
+  <li>
+    <span className="icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
+    <div>
+      <h4>Accountable Leadership</h4>
+      <p>Open reporting, clear goals, and 89 cents of every dollar going directly to programs.</p>
+    </div>
+  </li>
+  <li>
+    <span className="icon">
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 6v6l4 2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </span>
+    <div>
+      <h4>Enduring Commitment</h4>
+      <p>We mentor the next generation of leaders and stay until change takes root.</p>
+    </div>
+  </li>
+</ul>
+
+                <Link to="/about" className="hm-btn-green">
+                  Learn More About Us
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
                 </Link>
               </div>
-              
-              <div className="rlg-hero-links">
-                <span>📧 raisingleaderofgeneration@gmail.com</span>
-                <span>📞 +250784769382 | +250792588272</span>
-              </div>
+
             </div>
-            <div className="rlg-hero-img-wrap fade-up-2 float">
-              <img src={heroImage} alt="Young Leaders in Rwanda" />
-              <div className="rlg-hero-card">
-                <div className="rlg-hero-card-dot">
-                  <FontAwesomeIcon icon={faUsers} style={{ color: "#fff" }} />
+          </div>
+        </section>
+
+        {/* ============ PROGRAMS ============ */}
+        <section className="hm-section hm-programs" id="programs">
+          <div className="hm-container">
+            <div className="hm-section-head center">
+              <span className="hm-eyebrow"><span className="dot"></span> Our Programs</span>
+              <h2>What we do, and how we do it</h2>
+              <p>Three core pillars guide every initiative we launch and every community we serve.</p>
+            </div>
+
+            <div className="hm-programs-grid">
+              {displayPrograms.map((p, i) => (
+                <article key={i} className="hm-program-card">
+                  <div className="hm-program-img">
+                    <img src={p.image} alt={p.title} />
+                    <span className="hm-program-tag">{p.tag || p.category}</span>
+                  </div>
+                  <div className="hm-program-body">
+                    <div className="hm-program-icon">
+                      {p.iconSrc ? (
+                        <img src={p.iconSrc} alt="icon" />
+                      ) : (
+                        <svg viewBox="0 0 24 24">
+                          <path d={p.iconPath || fallbackPrograms[i % 3].iconPath} />
+                        </svg>
+                      )}
+                    </div>
+                    <h3>{p.title}</h3>
+                    <p>{p.description || p.longDescription}</p>
+                    <Link to="/programs" className="hm-program-link">
+                      Explore Program
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M5 12h14M13 6l6 6-6 6" />
+                      </svg>
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ============ IMPACT ============ */}
+        <section className="hm-section hm-impact" id="impact">
+          <div className="hm-container">
+            <div className="hm-section-head center">
+              <span className="hm-eyebrow"><span className="dot"></span> Our Impact</span>
+              <h2>Numbers that tell a story</h2>
+              <p>Every figure represents a life touched, a community strengthened, a future rewritten.</p>
+            </div>
+
+            <div className="hm-impact-grid">
+              <div className="hm-impact-item">
+                <div className="icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                  </svg>
                 </div>
-                <div>
-                  <b>1500+ Young Leaders</b>
-                  <span>Across Rwanda</span>
+                <div className="num">
+                  50<span className="plus">+</span>
                 </div>
+                <div className="lbl">Lives Positively Impacted</div>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* STATS SECTION */}
-      <section className="rlg-stats">
-        <div className="rlg-container">
-          <div className="rlg-stats-grid">
-            <div className="rlg-stat-card fade-up">
-              <div className="rlg-stat-icon"><FontAwesomeIcon icon={faUsers} style={{ color: "#15803d", fontSize: "1.5rem" }} /></div>
-              <div className="rlg-stat-num">{youthReached}+</div>
-              <div className="rlg-stat-label">Youth Reached</div>
-            </div>
-            <div className="rlg-stat-card fade-up-1">
-              <div className="rlg-stat-icon"><FontAwesomeIcon icon={faSchool} style={{ color: "#15803d", fontSize: "1.5rem" }} /></div>
-              <div className="rlg-stat-num">{schoolsPartnered}+</div>
-              <div className="rlg-stat-label">Schools Partnered</div>
-            </div>
-            <div className="rlg-stat-card fade-up-2">
-              <div className="rlg-stat-icon"><FontAwesomeIcon icon={faCalendarAlt} style={{ color: "#15803d", fontSize: "1.5rem" }} /></div>
-              <div className="rlg-stat-num">{annualEvents}+</div>
-              <div className="rlg-stat-label">Annual Events</div>
-            </div>
-            <div className="rlg-stat-card fade-up-3">
-              <div className="rlg-stat-icon"><FontAwesomeIcon icon={faFlag} style={{ color: "#15803d", fontSize: "1.5rem" }} /></div>
-              <div className="rlg-stat-num">{corePrograms}</div>
-              <div className="rlg-stat-label">Core Programs</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* MISSION STATEMENT */}
-      <section className="rlg-about">
-        <div className="rlg-container">
-          <div className="rlg-mission-quote">
-            <p>RLG is a youth-centered advocacy dedicated to nurturing the leading spirit in young people. We ensure the next generation produces prominent leaders with absolute qualities, moral integrity, and resilience that dominates the next edge for a better future.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* WHAT WE DO - SERVICES */}
-      <section className="rlg-services">
-        <div className="rlg-container">
-          <div style={{ textAlign: "center" }}>
-            <div className="rlg-label"><FontAwesomeIcon icon={faLightbulb} /> What We Do</div>
-            <h2 className="rlg-section-title">Empowering Through Action</h2>
-            <p className="rlg-section-sub" style={{ margin: "0 auto" }}>Our programs are designed to develop leaders through practical experience and mentorship</p>
-          </div>
-          <div className="rlg-services-grid">
-            <div className="rlg-service-card fade-up">
-              <div className="rlg-service-icon"><FontAwesomeIcon icon={faSchool} /></div>
-              <h3>School Leadership Development</h3>
-              <p>Trainings and mentoring for students through student councils and leadership bootcamps.</p>
-              <div className="rlg-service-badges">
-                <span className="rlg-service-badge">RLG Clubs Coordinate</span>
-                <span className="rlg-service-badge">RLG Impact</span>
-                <span className="rlg-service-badge">RLG Green Life</span>
-              </div>
-              <Link to="/programs#school"><button className="btn-ghost-rlg">Learn More →</button></Link>
-            </div>
-            <div className="rlg-service-card fade-up-1">
-              <div className="rlg-service-icon"><FontAwesomeIcon icon={faMicrophone} /></div>
-              <h3>Tournaments & Competitions</h3>
-              <p>Debate, public speaking, interschool challenges, entrepreneurship and leadership awards.</p>
-              <div className="rlg-service-badges">
-                <span className="rlg-service-badge">Light the Flame</span>
-                <span className="rlg-service-badge">Oasis of Wealth</span>
-              </div>
-              <Link to="/programs#tournaments"><button className="btn-ghost-rlg">Learn More →</button></Link>
-            </div>
-            <div className="rlg-service-card fade-up-2">
-              <div className="rlg-service-icon"><FontAwesomeIcon icon={faChalkboardUser} /></div>
-              <h3>Leadership Forums & Conferences</h3>
-              <p>Summits and forums on governance, entrepreneurship, and networking platforms.</p>
-              <div className="rlg-service-badges">
-                <span className="rlg-service-badge">My Role</span>
-                <span className="rlg-service-badge">Oasis of Wealth</span>
-                <span className="rlg-service-badge">My Heritage</span>
-              </div>
-              <Link to="/programs#forums"><button className="btn-ghost-rlg">Learn More →</button></Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* WHY RLG QUOTE */}
-      <section className="rlg-features">
-        <div className="rlg-container">
-          <div style={{ textAlign: "center" }}>
-            <div className="rlg-label"><FontAwesomeIcon icon={faQuoteLeft} /> Why RLG</div>
-            <div className="rlg-mission-quote" style={{ background: "#fff", maxWidth: "800px", margin: "0 auto" }}>
-              <p>"There is a gap in understanding the dynamics and mysteries of leadership responsibilities, especially in young people. RLG fills that gap."</p>
-              <cite>— Joshua Chris. K, Founder</cite>
-            </div>
-            <p style={{ marginTop: "1.5rem", color: "#6b7280" }}>We believe young people must be conscious through <strong>mental transformation</strong> and must <strong>rile inner abilities early</strong> to overtake leadership success and achieve <strong>Transgenerational relevance</strong>.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* CORE VALUES - CARDS */}
-      <section className="rlg-values">
-        <div className="rlg-container">
-          <div style={{ textAlign: "center" }}>
-            <div className="rlg-label"><FontAwesomeIcon icon={faMedal} /> Our Core Values</div>
-            <h2 className="rlg-section-title">What We Stand For</h2>
-            <p className="rlg-section-sub" style={{ margin: "0 auto" }}>These values guide everything we do at RLG</p>
-          </div>
-          <div className="rlg-values-grid">
-            {coreValues.map((value, i) => (
-              <div key={i} className="rlg-value-card fade-up" style={{ animationDelay: `${i * 0.05}s` }}>
-                <div className="rlg-value-icon">
-                  <FontAwesomeIcon icon={value.icon} />
+              <div className="hm-impact-item">
+                <div className="icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+                  </svg>
                 </div>
-                <h3>{value.name}</h3>
-                <p>{value.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* BLOG SECTION */}
-      <section className="rlg-blog">
-        <div className="rlg-container">
-          <div style={{ textAlign: "center" }}>
-            <div className="rlg-label"><FontAwesomeIcon icon={faNewspaper} /> Latest from Our Blog</div>
-            <h2 className="rlg-section-title">Stories & Insights</h2>
-          </div>
-          <div className="rlg-blog-grid">
-            {blogPosts.map((post, i) => (
-              <div key={i} className="rlg-blog-card fade-up" style={{ animationDelay: `${i * 0.1}s` }}>
-                <div className="rlg-blog-date"><FontAwesomeIcon icon={faCalendarAlt} /> {post.date}</div>
-                <h3>{post.title}</h3>
-                <p>{post.excerpt}</p>
-                <Link to={post.link}><button className="btn-ghost-rlg">Read More →</button></Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* TESTIMONIALS */}
-      <section className="rlg-testimonials">
-        <div className="rlg-container">
-          <div style={{ textAlign: "center" }}>
-            <div className="rlg-label" style={{ background: "rgba(255,255,255,0.15)", color: "#fff" }}><FontAwesomeIcon icon={faComments} /> Success Stories</div>
-            <h2 className="rlg-section-title">What Our Community Says</h2>
-            <p className="rlg-section-sub" style={{ margin: "0 auto", color: "rgba(255,255,255,.7)" }}>Hear from young leaders who transformed their lives through RLG</p>
-          </div>
-          <div className="rlg-testi-card">
-            <div className="rlg-testi-quote"><FontAwesomeIcon icon={faQuoteLeft} /></div>
-            <p>{currentTestimonialData.text}</p>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                <div style={{ width: "3rem", height: "3rem", borderRadius: "50%", background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "1.1rem" }}>
-                  {currentTestimonialData.initials || currentTestimonialData.name?.charAt(0) || "RL"}
+                <div className="num">
+                  200<span className="plus">+</span>
                 </div>
-                <div>
-                  <h4 style={{ fontWeight: 700, color: "#14532d" }}>{currentTestimonialData.name}</h4>
-                  <span style={{ color: "#6b7280", fontSize: ".8rem" }}>{currentTestimonialData.role}</span>
+                <div className="lbl">Active Volunteers</div>
+              </div>
+
+              <div className="hm-impact-item">
+                <div className="icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                    <path d="M22 4L12 14.01l-3-3" />
+                  </svg>
+                </div>
+                <div className="num">
+                  10<span className="plus">+</span>
+                </div>
+                <div className="lbl">Projects Completed</div>
+              </div>
+
+              <div className="hm-impact-item">
+                <div className="icon">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+                  </svg>
+                </div>
+                <div className="num">
+                  10<span className="plus">+</span>
+                </div>
+                <div className="lbl">Countries Reached</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ============ STORY / TESTIMONIAL (Now with 6 rotating testimonials) ============ */}
+        <section className="hm-section hm-story" id="stories">
+          <div className="hm-container">
+            <div className="hm-section-head center">
+              <span className="hm-eyebrow"><span className="dot"></span> Stories of Change</span>
+              <h2>Real people. Real impact.</h2>
+            </div>
+
+            <div className="hm-story-grid">
+              {/* Left side image (event1) — stays the same */}
+              <div 
+                className="hm-story-img"
+                style={{ backgroundImage: `url(${event1})` }}
+              ></div>
+
+              {/* Right side content — now rotates through 6 testimonials */}
+              <div className="hm-story-content">
+                <div className="quote-mark">&ldquo;</div>
+                <blockquote>
+                  {currentTestimonial.quote}
+                </blockquote>
+                <div className="hm-story-author">
+                  <div className="avatar">
+                    <img
+                      src={currentTestimonial.avatar || heroImg}
+                      alt={currentTestimonial.name}
+                    />
+                  </div>
+                  <div>
+                    <div className="name">{currentTestimonial.name}</div>
+                    <div className="role">{currentTestimonial.role}</div>
+                  </div>
                 </div>
               </div>
-              <div style={{ display: "flex", gap: ".5rem" }}>
-                {activeTestimonials.map((_, idx) => (
+            </div>
+
+            {/* Dots for testimonial navigation */}
+            {testimonials.length > 1 && (
+              <div className="hm-story-dots">
+                {testimonials.map((_, idx) => (
                   <button
                     key={idx}
-                    className={`rlg-testi-dot ${idx === currentTestimonial ? 'active' : ''}`}
-                    onClick={() => setCurrentTestimonial(idx)}
+                    className={idx === currentTestimonialIndex ? "active" : ""}
+                    onClick={() => setCurrentTestimonialIndex(idx)}
+                    aria-label={`View testimonial ${idx + 1}`}
                   />
                 ))}
               </div>
+            )}
+          </div>
+        </section>
+
+        {/* ============ CTA ============ */}
+        <section className="hm-cta" id="cta">
+          <div className="hm-container">
+            <div className="hm-cta-inner">
+              <h2>Ready to make a difference?</h2>
+              <p>
+                Whether you give your time, your resources, or your voice — every action
+                moves us closer to a world where compassion wins.
+              </p>
+              <div className="hm-cta-actions">
+                <Link to="/getinvolved" className="hm-btn-white">
+                  Join Our Mission
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                </Link>
+                <Link to="/contact" className="hm-btn-outline-white">
+                  Partner With Us
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* 7 YEAR VISION */}
-      <section className="rlg-vision">
-        <div className="rlg-container">
-          <h2>Be Part of the Next Generation of Prominent Leaders</h2>
-          <p>By the next 7 years, RLG will expand across Rwanda, organize an annual youth leadership summit, and build a network of empowered young leaders influencing governance, business, and social change.</p>
-          <Link to="/getinvolved"><button className="btn-white-rlg">Get Involved Today →</button></Link>
-          <div className="rlg-vision-stats">
-            <div className="rlg-vision-stat"><span className="number">7+</span> <span>Years Vision</span></div>
-            <div className="rlg-vision-stat"><span className="number">30+</span> <span>Districts</span></div>
-            <div className="rlg-vision-stat"><span className="number">10k+</span> <span>Youth Impacted</span></div>
-          </div>
-        </div>
-      </section>
-
-      {/* NEWSLETTER */}
-      <section className="rlg-newsletter">
-        <div className="rlg-container">
-          <div className="rlg-newsletter-box">
-            <FontAwesomeIcon icon={faEnvelope} style={{ fontSize: "2.5rem", marginBottom: "1rem", color: "#4ade80" }} />
-            <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.8rem", fontWeight: 800, color: "#fff" }}>Stay Updated with RLG</h3>
-            <p style={{ color: "rgba(255,255,255,.75)", marginBottom: "1.75rem" }}>Subscribe to our newsletter for leadership tips, event announcements, and success stories.</p>
-            <form className="rlg-newsletter-form" onSubmit={handleNewsletter}>
-              <input type="email" placeholder="Enter your email address" value={email} onChange={e => setEmail(e.target.value)} required />
-              <button type="submit" className="btn-primary-rlg">Subscribe <FontAwesomeIcon icon={faArrowRight} /></button>
-            </form>
-            <p style={{ color: "rgba(255,255,255,.55)", fontSize: ".8rem", marginTop: "1rem" }}><FontAwesomeIcon icon={faHeart} /> No spam, unsubscribe anytime</p>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="rlg-cta">
-        <div className="rlg-container">
-          <h2>Ready to Start Your Leadership Journey?</h2>
-          <p>Join young leaders who are making a difference in Rwanda and around the world.</p>
-          <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
-            <button className="btn-white-rlg" onClick={handleApply}><FontAwesomeIcon icon={faRocket} /> Apply for Programs</button>
-            <Link to="/contact"><button className="btn-outline-rlg" style={{ borderColor: "#fff", color: "#fff" }}><FontAwesomeIcon icon={faComments} /> Talk to an Advisor</button></Link>
-          </div>
-        </div>
-      </section>
-    </div>
+      </div>
+    </>
   );
 }
