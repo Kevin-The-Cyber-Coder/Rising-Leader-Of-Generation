@@ -1,498 +1,834 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faPhone, faEnvelope, faMapMarkerAlt, faPaperPlane, 
-  faClock, faQuestionCircle, faHandshake, faHeart, 
-  faStar, faUserGraduate, faGlobe, faShieldHeart,
-  faSpinner, faCheckCircle
-} from "@fortawesome/free-solid-svg-icons";
-import {
-  faFacebook,
-  faTwitter,
-  faInstagram
-} from "@fortawesome/free-brands-svg-icons";
 import Swal from "sweetalert2";
-import { heroBg } from "../assets";
 
-/* ─── SweetAlert2 helpers ─────────────────────────────────────── */
-const showSuccess = (title, text) =>
-  Swal.fire({ icon: "success", title, text, confirmButtonColor: "#166534", timer: 3500, timerProgressBar: true });
-const showError = (title, text) =>
-  Swal.fire({ icon: "error", title, text, confirmButtonColor: "#166534" });
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-/* ─── API Service ─────────────────────────────────────────────── */
-const API_URL = 'http://localhost:5000/api';
+const subjects = [
+  "Programs inquiry",
+  "Partnership request",
+  "Volunteering",
+  "Donation",
+  "General question",
+];
 
-const api = {
-  submitContact: async (data) => {
-    const response = await fetch(`${API_URL}/contact`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.message || 'Failed to send message');
-    return result;
-  }
-};
+const faqs = [
+  {
+    q: "How can my school start an RLG Club?",
+    a: "Email us or call, and we will send a Community Coordinator to meet your school administration.",
+  },
+  {
+    q: "Are your events free?",
+    a: "Most events are free for students. Some conferences may require registration. We never turn away a student for lack of funds.",
+  },
+  {
+    q: "Can I donate online?",
+    a: "Yes — visit our Donate page to give via mobile money, bank transfer, or credit card.",
+  },
+  {
+    q: "How do I become a partner?",
+    a: "Fill out the contact form or Get Involved page, and we will send you a partnership proposal.",
+  },
+];
 
-/* ─── Component ───────────────────────────────────────────────── */
 export default function Contact() {
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     name: "",
     email: "",
     phone: "",
     subject: "",
-    message: ""
+    message: "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
-      showError("Missing Information", "Please fill in your name, email, subject, and message.");
+    if (!form.name || !form.email || !form.subject || !form.message) {
+      Swal.fire({
+        icon: "warning",
+        title: "Missing Information",
+        text: "Please fill in your name, email, subject, and message.",
+        confirmButtonColor: "#2f6b4f",
+      });
       return;
     }
-    
-    setIsSubmitting(true);
-    
+
+    setSubmitting(true);
     try {
-      await api.submitContact(formData);
-      showSuccess(
-        "Message Sent! 🎉",
-        `Thank you ${formData.name}! We've received your message and will respond within 2-3 business days.`
-      );
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        subject: "",
-        message: ""
+      const r = await fetch(`${API_URL}/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
       });
-    } catch (error) {
-      showError("Error", error.message || "Failed to send message. Please try again.");
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.message || "Failed to send message");
+
+      Swal.fire({
+        icon: "success",
+        title: "Message Sent!",
+        text: `Thank you ${form.name}! We'll respond within 2–3 business days.`,
+        confirmButtonColor: "#2f6b4f",
+        timer: 3500,
+        timerProgressBar: true,
+      });
+      setForm({ name: "", email: "", phone: "", subject: "", message: "" });
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: err.message,
+        confirmButtonColor: "#2f6b4f",
+      });
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
-  const contactInfo = [
-    {
-      icon: faPhone,
-      title: "Phone",
-      details: ["+250784769382", "+250792588272"],
-      color: "#22c55e"
-    },
-    {
-      icon: faEnvelope,
-      title: "Email",
-      details: ["raisingleaderofgeneration@gmail.com", "kwikirizachrisjoshua435@gmail.com"],
-      color: "#16a34a"
-    },
-    {
-      icon: faMapMarkerAlt,
-      title: "Location",
-      details: ["Rwanda (Countrywide)"],
-      subtext: "For specific office address, please call or email us.",
-      color: "#15803d"
-    }
-  ];
-
-  const socialLinks = [
-    { name: "Facebook", icon: faFacebook, handle: "@RLG RWANDA", url: "https://facebook.com", color: "#1877f2" },
-    { name: "Twitter", icon: faTwitter, handle: "@RLG RWANDA", url: "https://twitter.com", color: "#1da1f2" },
-    { name: "Instagram", icon: faInstagram, handle: "@RLG RWANDA", url: "https://instagram.com", color: "#e4405f" }
-  ];
-
-  const subjects = [
-    { value: "Programs inquiry", label: "Programs inquiry", icon: faUserGraduate },
-    { value: "Partnership request", label: "Partnership request", icon: faHandshake },
-    { value: "Volunteering", label: "Volunteering", icon: faHeart },
-    { value: "Donation", label: "Donation", icon: faStar },
-    { value: "General question", label: "General question", icon: faQuestionCircle }
-  ];
-
-  const faqs = [
-    {
-      q: "How can my school start an RLG Club?",
-      a: "Email us or call, and we will send a Community Coordinator to meet your principal or headteacher."
-    },
-    {
-      q: "Are your events free?",
-      a: "Most events are free for students. Some conferences may require registration for materials. We never turn away a student for lack of funds."
-    },
-    {
-      q: "Can I donate online?",
-      a: "Yes. Visit our Donate page to give via mobile money or bank transfer."
-    },
-    {
-      q: "How do I become a partner?",
-      a: "Fill out the form on this page or the Get Involved page, and we will send you a partnership proposal."
-    },
-    {
-      q: "Does RLG work outside Rwanda?",
-      a: "Currently, RLG focuses on Rwanda. But we are open to conversations with organizations across Africa."
-    }
-  ];
-
   return (
-    <div className="rlg-contact-page pt-16">
+    <>
       <style>{`
-        .rlg-contact-page { font-family: 'Lato', 'Segoe UI', sans-serif; color: #1a1a1a; }
-        :root {
-          --green-900: #14532d;
-          --green-800: #166534;
-          --green-700: #15803d;
-          --green-600: #16a34a;
-          --green-500: #22c55e;
-          --green-400: #4ade80;
-          --green-100: #dcfce7;
-          --green-50:  #f0fdf4;
-          --shadow-sm: 0 2px 8px rgba(21,128,61,.10);
-          --shadow-md: 0 8px 30px rgba(21,128,61,.15);
-          --shadow-lg: 0 20px 60px rgba(21,128,61,.20);
-          --radius:    1rem;
-          --transition: .3s cubic-bezier(.4,0,.2,1);
+        /* ============================================================
+           CONTACT PAGE — matches HTML exactly
+           ============================================================ */
+        :root{
+          --navy:#152B3A;
+          --navy-deep:#0F212D;
+          --green:#2F6B4F;
+          --green-deep:#234F3B;
+          --green-light:#8FC1A3;
+          --green-bright:#3F8C63;
+          --gold:#F2C94C;
+          --gold-hover:#E0B63A;
+          --paper:#FAF8F4;
+          --paper-dim:#F1EDE3;
+          --line:#E4DFD3;
+          --text:#3A3F42;
+          --text-soft:#6B7178;
         }
 
-        @keyframes fadeUp { from { opacity:0; transform:translateY(30px) } to { opacity:1; transform:none } }
-        @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
-        
-        .fade-up { animation: fadeUp .7s both; }
-        .fade-up-1 { animation: fadeUp .7s .1s both; }
-        .fade-up-2 { animation: fadeUp .7s .2s both; }
-        .fade-up-3 { animation: fadeUp .7s .3s both; }
-
-        .rlg-container { max-width: 1200px; margin: 0 auto; padding: 0 1.25rem; }
-
-        /* Hero Section */
-        .rlg-hero {
-          position: relative; min-height: 40vh; display: flex; align-items: center;
-          background: linear-gradient(135deg, #0a2a1a 0%, #14532d 100%);
-          overflow: hidden;
+        .ct-page{
+          background:var(--paper);
+          color:var(--text);
+          font-family:'Inter', system-ui, -apple-system, sans-serif;
+          font-size:16px;
+          line-height:1.5;
         }
-        .rlg-hero::before {
-          content:''; position:absolute; inset:0;
-          background: url(${heroBg}) center/cover no-repeat;
-          opacity:.12;
-        }
-        .rlg-hero-content { position: relative; z-index: 2; padding: 4rem 0; text-align: center; }
-        .rlg-hero h1 { font-family:'Playfair Display',Georgia,serif; font-size:clamp(2.5rem,5vw,4rem); font-weight:800; color:#fff; margin-bottom:1rem; }
-        .rlg-hero p { color:rgba(255,255,255,.85); font-size:1.1rem; max-width:700px; margin:0 auto; line-height:1.7; }
+        .ct-page *{ box-sizing:border-box; }
+        .ct-page img{ max-width:100%; display:block; }
 
-        /* Section Label */
-        .rlg-label {
-          display:inline-flex;align-items:center;gap:.5rem;
-          background:linear-gradient(135deg, #dcfce7, #f0fdf4);
-          color:#14532d;
-          padding:.5rem 1.25rem;
-          border-radius:999px;
-          font-size:.8rem;
+        .ct-container{
+          max-width:1280px;
+          margin:0 auto;
+          padding:0 48px;
+        }
+        .ct-section{
+          padding:100px 0;
+          position:relative;
+        }
+        .ct-section-gray{
+          background:linear-gradient(180deg, var(--paper) 0%, var(--paper-dim) 100%);
+        }
+
+        .ct-eyebrow{
+          display:inline-flex;
+          align-items:center;
+          gap:8px;
+          font-size:12.5px;
           font-weight:700;
-          letter-spacing:.05em;
+          letter-spacing:0.12em;
           text-transform:uppercase;
-          margin-bottom:1rem;
-          border:1px solid rgba(34,197,94,0.3);
+          color:var(--green);
+          margin-bottom:16px;
         }
-        .rlg-section-title { font-family:'Playfair Display',Georgia,serif; font-size:clamp(1.8rem,3vw,2.6rem); font-weight:800; color:#111; margin-bottom:.75rem; }
-        .rlg-section-sub { color:#6b7280; font-size:1rem; line-height:1.7; max-width:580px; }
+        .ct-eyebrow .dot{
+          width:6px;
+          height:6px;
+          border-radius:50%;
+          background:var(--gold);
+        }
 
-        /* Contact Info Grid */
-        .rlg-contact-info { padding: 5rem 0; background: #fff; }
-        .rlg-contact-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 2rem;
-          margin-top: 2rem;
+        /* ---------- Page Hero ---------- */
+        .ct-hero{
+          position:relative;
+          background:linear-gradient(135deg, var(--navy) 0%, var(--green-deep) 100%);
+          padding:140px 0 100px;
+          overflow:hidden;
+          color:#fff;
+          text-align:center;
         }
-        @media (max-width: 900px) { .rlg-contact-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 600px) { .rlg-contact-grid { grid-template-columns: 1fr; } }
-        .rlg-contact-card {
-          background: #fff;
-          border-radius: var(--radius);
-          padding: 2rem;
-          text-align: center;
-          border: 1px solid #e5e7eb;
-          transition: var(--transition);
+        .ct-hero::before{
+          content:'';
+          position:absolute;
+          top:-40%; left:-10%;
+          width:70%; height:180%;
+          background:radial-gradient(ellipse, rgba(143,193,163,0.22), transparent 65%);
+          pointer-events:none;
         }
-        .rlg-contact-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: #22c55e; }
-        .rlg-contact-icon {
-          width: 4rem; height: 4rem; background: linear-gradient(135deg, #22c55e, #16a34a);
-          border-radius: 1rem; display: flex; align-items: center; justify-content: center;
-          margin: 0 auto 1rem;
+        .ct-hero::after{
+          content:'';
+          position:absolute;
+          bottom:-50%; right:-10%;
+          width:60%; height:160%;
+          background:radial-gradient(ellipse, rgba(242,201,76,0.12), transparent 65%);
+          pointer-events:none;
         }
-        .rlg-contact-icon svg { color: #fff; font-size: 1.5rem; }
-        .rlg-contact-card h3 { font-size: 1.2rem; font-weight: 800; color: #14532d; margin-bottom: 1rem; }
-        .rlg-contact-card p { color: #6b7280; margin: 0.3rem 0; }
-        .rlg-contact-card small { color: #9ca3af; font-size: 0.75rem; }
+        .ct-hero-inner{
+          position:relative;
+          z-index:1;
+          max-width:760px;
+          margin:0 auto;
+          padding:0 24px;
+        }
+        .ct-hero .ct-eyebrow{
+          color:var(--green-light);
+          justify-content:center;
+        }
+        .ct-hero h1{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-weight:600;
+          font-size:clamp(38px, 5vw, 60px);
+          line-height:1.1;
+          letter-spacing:-0.02em;
+          color:#fff;
+          margin-bottom:20px;
+        }
+        .ct-hero h1 .accent{ color:var(--gold); }
+        .ct-hero p{
+          font-size:clamp(16px, 1.3vw, 19px);
+          line-height:1.65;
+          color:rgba(255,255,255,0.82);
+          max-width:620px;
+          margin:0 auto;
+        }
 
-        /* Social Section */
-        .rlg-social-section { background: var(--green-50); padding: 3rem 0; }
-        .rlg-social-grid {
-          display: flex;
-          justify-content: center;
-          gap: 2rem;
-          flex-wrap: wrap;
+        /* ---------- Section heads ---------- */
+        .ct-section-head{
+          max-width:640px;
+          margin-bottom:48px;
         }
-        .rlg-social-card {
-          background: #fff;
-          border-radius: var(--radius);
-          padding: 1.5rem 2rem;
-          text-align: center;
-          transition: var(--transition);
-          border: 1px solid #e5e7eb;
-          min-width: 180px;
-          text-decoration: none;
-          display: block;
+        .ct-section-head.center{
+          margin-left:auto;
+          margin-right:auto;
+          text-align:center;
         }
-        .rlg-social-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); }
-        .rlg-social-icon {
-          width: 3rem; height: 3rem; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-          margin: 0 auto 0.8rem;
+        .ct-section-head h2{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-weight:600;
+          font-size:clamp(28px, 3vw, 38px);
+          line-height:1.18;
+          letter-spacing:-0.02em;
+          color:var(--navy);
+          margin-bottom:12px;
         }
-        .rlg-social-card h4 { font-weight: 700; color: #14532d; margin-bottom: 0.3rem; }
-        .rlg-social-card p { color: #6b7280; font-size: 0.8rem; }
+        .ct-section-head p{
+          font-size:15.5px;
+          color:var(--text-soft);
+          line-height:1.7;
+        }
 
-        /* Form Section */
-        .rlg-form-section { padding: 5rem 0; background: #fff; }
-        .rlg-form-card {
-          background: var(--green-50);
-          border-radius: var(--radius);
-          padding: 2.5rem;
-          box-shadow: var(--shadow-md);
-          max-width: 800px;
-          margin: 0 auto;
+        /* ---------- Contact Info Cards ---------- */
+        .ct-contact-grid{
+          display:grid;
+          grid-template-columns:repeat(3, 1fr);
+          gap:28px;
         }
-        .rlg-form-group { margin-bottom: 1.2rem; }
-        .rlg-form-group label { display: block; font-weight: 600; color: #14532d; margin-bottom: 0.5rem; }
-        .rlg-form-group input, .rlg-form-group select, .rlg-form-group textarea {
-          width: 100%;
-          padding: 0.8rem;
-          border: 1px solid #e5e7eb;
-          border-radius: 0.5rem;
-          font-size: 0.9rem;
-          outline: none;
-          transition: var(--transition);
-          background: #fff;
+        .ct-contact-card{
+          background:#fff;
+          border:1px solid var(--line);
+          border-radius:14px;
+          padding:40px 32px;
+          text-align:center;
+          transition:transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
         }
-        .rlg-form-group input:focus, .rlg-form-group select:focus, .rlg-form-group textarea:focus {
-          border-color: #22c55e;
-          box-shadow: 0 0 0 3px rgba(34,197,94,0.1);
+        .ct-contact-card:hover{
+          transform:translateY(-6px);
+          box-shadow:0 24px 48px rgba(21,43,58,0.12);
+          border-color:var(--green-light);
         }
-        .rlg-subject-group {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.8rem;
-          margin-top: 0.5rem;
+        .ct-contact-icon{
+          width:60px; height:60px;
+          border-radius:14px;
+          background:linear-gradient(135deg, var(--green) 0%, var(--green-deep) 100%);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          margin:0 auto 20px;
+          box-shadow:0 8px 22px rgba(47,107,79,0.3);
         }
-        .rlg-subject-option {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.5rem 1rem;
-          background: #fff;
-          border: 1px solid #e5e7eb;
-          border-radius: 999px;
-          cursor: pointer;
-          transition: var(--transition);
+        .ct-contact-icon svg{
+          width:26px; height:26px;
+          stroke:#fff; fill:none;
+          stroke-width:1.8;
+          stroke-linecap:round;
+          stroke-linejoin:round;
         }
-        .rlg-subject-option:hover { border-color: #22c55e; background: var(--green-50); }
-        .rlg-subject-option.selected { background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; border-color: transparent; }
-        .rlg-subject-option.selected svg { color: #fff; }
-        .rlg-submit-btn {
-          background: linear-gradient(135deg, #22c55e, #16a34a);
-          color: #fff; padding: 1rem; border-radius: 999px;
-          font-weight: 700; font-size: 1rem; border: none; cursor: pointer;
-          transition: var(--transition); width: 100%;
+        .ct-contact-card h3{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:19px;
+          font-weight:600;
+          color:var(--navy);
+          margin-bottom:14px;
         }
-        .rlg-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(34,197,94,0.4); }
+        .ct-contact-card p{
+          font-size:14.5px;
+          color:var(--text-soft);
+          line-height:1.6;
+          margin-bottom:4px;
+        }
+        .ct-contact-card p:last-child{ margin-bottom:0; }
 
-        /* FAQ Section */
-        .rlg-faq { background: var(--green-50); padding: 5rem 0; }
-        .rlg-faq-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 1.5rem;
-          margin-top: 2rem;
+        /* ---------- Social Media ---------- */
+        .ct-social-grid{
+          display:flex;
+          justify-content:center;
+          flex-wrap:wrap;
+          gap:24px;
         }
-        @media (max-width: 768px) { .rlg-faq-grid { grid-template-columns: 1fr; } }
-        .rlg-faq-card {
-          background: #fff;
-          border-radius: var(--radius);
-          padding: 1.5rem;
-          border: 1px solid #e5e7eb;
-          transition: var(--transition);
+        .ct-social-card{
+          background:#fff;
+          border:1px solid var(--line);
+          border-radius:14px;
+          padding:32px 28px;
+          text-align:center;
+          min-width:200px;
+          text-decoration:none;
+          transition:transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+          display:block;
         }
-        .rlg-faq-card:hover { box-shadow: var(--shadow-sm); border-color: #22c55e; }
-        .rlg-faq-card h3 { font-weight: 800; color: #14532d; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
-        .rlg-faq-card p { color: #6b7280; line-height: 1.6; }
+        .ct-social-card:hover{
+          transform:translateY(-6px);
+          box-shadow:0 20px 44px rgba(21,43,58,0.12);
+          border-color:var(--green-light);
+        }
+        .ct-social-icon{
+          width:56px; height:56px;
+          border-radius:50%;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          margin:0 auto 16px;
+          box-shadow:0 6px 18px rgba(0,0,0,0.15);
+        }
+        .ct-social-icon svg{
+          width:24px; height:24px;
+          fill:#fff;
+        }
+        .ct-social-icon.facebook{ background:linear-gradient(135deg, #1877f2, #0d5cc4); }
+        .ct-social-icon.twitter{ background:linear-gradient(135deg, #1da1f2, #0d8ddb); }
+        .ct-social-icon.instagram{ background:linear-gradient(135deg, #e4405f, #c92d4b); }
 
-        /* Promise Section */
-        .rlg-promise { background: linear-gradient(135deg, #0a2a1a, #14532d); padding: 4rem 0; text-align: center; }
-        .rlg-promise h2 { color: #fff; font-size: 1.8rem; margin-bottom: 1rem; font-family: 'Playfair Display', serif; }
-        .rlg-promise p { color: rgba(255,255,255,.8); max-width: 600px; margin: 0 auto; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .ct-social-card h4{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:17px;
+          font-weight:600;
+          color:var(--navy);
+          margin-bottom:6px;
+        }
+        .ct-social-card p{
+          font-size:13px;
+          color:var(--text-soft);
+        }
 
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Lato:wght@400;700&display=swap');
+        /* ---------- Form ---------- */
+        .ct-form-wrapper{
+          max-width:780px;
+          margin:0 auto;
+          background:#fff;
+          border:1px solid var(--line);
+          border-radius:16px;
+          padding:48px 44px;
+          box-shadow:0 20px 50px rgba(21,43,58,0.08);
+          position:relative;
+          overflow:hidden;
+        }
+        .ct-form-wrapper::before{
+          content:'';
+          position:absolute;
+          top:0; left:0; right:0;
+          height:4px;
+          background:linear-gradient(90deg, var(--green), var(--green-light), var(--gold));
+        }
+        .ct-form-row{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:20px;
+          margin-bottom:22px;
+        }
+        .ct-field{ margin-bottom:22px; }
+        .ct-field label{
+          display:block;
+          font-size:13px;
+          font-weight:600;
+          color:var(--navy);
+          margin-bottom:8px;
+        }
+        .ct-field input,
+        .ct-field textarea{
+          width:100%;
+          padding:14px 16px;
+          border:1.5px solid var(--line);
+          border-radius:8px;
+          font-size:14.5px;
+          font-family:'Inter', sans-serif;
+          color:var(--text);
+          background:var(--paper);
+          transition:border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+          outline:none;
+        }
+        .ct-field textarea{
+          min-height:140px;
+          resize:vertical;
+          line-height:1.6;
+        }
+        .ct-field input:focus,
+        .ct-field textarea:focus{
+          border-color:var(--green);
+          background:#fff;
+          box-shadow:0 0 0 4px rgba(47,107,79,0.1);
+        }
+        .ct-field input::placeholder,
+        .ct-field textarea::placeholder{
+          color:#9AA0A6;
+        }
+
+        /* Subject chips */
+        .ct-subject-chips{
+          display:flex;
+          flex-wrap:wrap;
+          gap:10px;
+          margin-top:4px;
+        }
+        .ct-subject-chip{
+          padding:10px 18px;
+          border-radius:100px;
+          border:1.5px solid var(--line);
+          background:#fff;
+          color:var(--text);
+          font-size:13px;
+          font-weight:600;
+          font-family:'Inter', sans-serif;
+          cursor:pointer;
+          transition:all 0.2s ease;
+        }
+        .ct-subject-chip:hover{
+          border-color:var(--green);
+          color:var(--green);
+        }
+        .ct-subject-chip.active{
+          background:var(--green);
+          border-color:var(--green);
+          color:#fff;
+          box-shadow:0 4px 12px rgba(47,107,79,0.28);
+        }
+
+        .ct-submit-btn{
+          width:100%;
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          gap:10px;
+          background:var(--green);
+          color:#fff;
+          font-size:15.5px;
+          font-weight:700;
+          font-family:'Inter', sans-serif;
+          padding:16px 32px;
+          border-radius:8px;
+          border:none;
+          cursor:pointer;
+          transition:background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+          box-shadow:0 8px 22px rgba(47,107,79,0.3);
+          margin-top:6px;
+        }
+        .ct-submit-btn:hover:not(:disabled){
+          background:var(--green-bright);
+          transform:translateY(-2px);
+          box-shadow:0 12px 28px rgba(47,107,79,0.38);
+        }
+        .ct-submit-btn:active:not(:disabled){ transform:translateY(0); }
+        .ct-submit-btn:disabled{ opacity:0.7; cursor:not-allowed; }
+        .ct-submit-btn svg{
+          width:16px; height:16px;
+          stroke:currentColor; fill:none;
+          stroke-width:2;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+
+        /* ---------- FAQ ---------- */
+        .ct-faq-grid{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:24px;
+        }
+        .ct-faq-card{
+          background:#fff;
+          border:1px solid var(--line);
+          border-left:4px solid var(--green);
+          border-radius:10px;
+          padding:32px 30px;
+          transition:transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .ct-faq-card:hover{
+          transform:translateY(-4px);
+          box-shadow:0 16px 40px rgba(21,43,58,0.1);
+        }
+        .ct-faq-card h4{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:17px;
+          font-weight:600;
+          color:var(--navy);
+          margin-bottom:10px;
+          line-height:1.4;
+        }
+        .ct-faq-card p{
+          font-size:14.5px;
+          color:var(--text-soft);
+          line-height:1.7;
+        }
+
+        /* ---------- Promise ---------- */
+        .ct-promise{
+          background:linear-gradient(135deg, var(--navy) 0%, var(--green-deep) 100%);
+          color:#fff;
+          padding:80px 0;
+          position:relative;
+          overflow:hidden;
+          text-align:center;
+        }
+        .ct-promise::before{
+          content:'';
+          position:absolute;
+          top:-50%; left:50%;
+          transform:translateX(-50%);
+          width:80%; height:200%;
+          background:radial-gradient(ellipse, rgba(143,193,163,0.18), transparent 65%);
+          pointer-events:none;
+        }
+        .ct-promise-inner{
+          position:relative;
+          z-index:1;
+          max-width:640px;
+          margin:0 auto;
+          padding:0 24px;
+        }
+        .ct-promise-icon{
+          width:64px; height:64px;
+          border-radius:50%;
+          background:rgba(242,201,76,0.15);
+          border:1.5px solid rgba(242,201,76,0.3);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          margin:0 auto 20px;
+        }
+        .ct-promise-icon svg{
+          width:28px; height:28px;
+          stroke:var(--gold);
+          fill:none;
+          stroke-width:1.8;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+        .ct-promise h2{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-weight:600;
+          font-size:clamp(28px, 3vw, 36px);
+          line-height:1.2;
+          letter-spacing:-0.02em;
+          color:#fff;
+          margin-bottom:12px;
+        }
+        .ct-promise p{
+          font-size:16px;
+          color:rgba(255,255,255,0.82);
+          line-height:1.7;
+        }
+
+        /* ---------- Responsive ---------- */
+        @media (max-width: 1024px){
+          .ct-container{ padding:0 32px; }
+          .ct-hero{ padding:110px 0 80px; }
+          .ct-contact-grid{ grid-template-columns:1fr; max-width:520px; margin:0 auto; }
+          .ct-faq-grid{ grid-template-columns:1fr; }
+        }
+        @media (max-width: 640px){
+          .ct-container{ padding:0 22px; }
+          .ct-section{ padding:72px 0; }
+          .ct-hero{ padding:90px 0 70px; }
+          .ct-form-wrapper{ padding:36px 26px; }
+          .ct-form-row{ grid-template-columns:1fr; gap:0; }
+          .ct-social-card{ min-width:100%; }
+        }
+        @media (prefers-reduced-motion: reduce){
+          .ct-page *{ transition:none !important; animation:none !important; }
+        }
       `}</style>
 
-      {/* HERO SECTION */}
-      <section className="rlg-hero">
-        <div className="rlg-hero-content">
-          <div className="rlg-container">
-            <div className="fade-up">
-              <h1>Contact Us</h1>
-              <p>We would love to hear from you. Whether you want to partner, volunteer, ask a question, or invite us to your school — reach out.</p>
+      <div className="ct-page">
+
+        {/* ============ PAGE HERO ============ */}
+        <section className="ct-hero">
+          <div className="ct-hero-inner">
+            <span className="ct-eyebrow"><span className="dot"></span> Get in Touch</span>
+            <h1>Contact <span className="accent">Us</span></h1>
+            <p>
+              We'd love to hear from you — whether you want to partner, volunteer,
+              or simply ask a question.
+            </p>
+          </div>
+        </section>
+
+        {/* ============ CONTACT INFO ============ */}
+        <section className="ct-section">
+          <div className="ct-container">
+            <div className="ct-section-head center">
+              <span className="ct-eyebrow"><span className="dot"></span> Contact Information</span>
+              <h2>Reach us directly</h2>
+              <p>Choose the channel that works best for you — we're here to help.</p>
+            </div>
+
+            <div className="ct-contact-grid">
+              <div className="ct-contact-card">
+                <div className="ct-contact-icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 16.92z" />
+                  </svg>
+                </div>
+                <h3>Phone</h3>
+                <p>+250 784 769 382</p>
+                <p>+250 792 588 272</p>
+              </div>
+
+              <div className="ct-contact-card">
+                <div className="ct-contact-icon">
+                  <svg viewBox="0 0 24 24">
+                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                    <path d="M22 6l-10 7L2 6" />
+                  </svg>
+                </div>
+                <h3>Email</h3>
+                <p>raisingleaderofgeneration@gmail.com</p>
+              </div>
+
+              <div className="ct-contact-card">
+                <div className="ct-contact-icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                </div>
+                <h3>Location</h3>
+                <p>Kigali, Rwanda</p>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* CONTACT INFORMATION */}
-      <section className="rlg-contact-info">
-        <div className="rlg-container">
-          <div className="fade-up-1">
-            <div className="rlg-label"><FontAwesomeIcon icon={faPhone} /> Get in Touch</div>
-            <h2 className="rlg-section-title">Contact Information</h2>
-          </div>
-          <div className="rlg-contact-grid">
-            {contactInfo.map((info, index) => (
-              <div key={index} className="rlg-contact-card fade-up-2" style={{ animationDelay: `${index * 0.1}s` }}>
-                <div className="rlg-contact-icon">
-                  <FontAwesomeIcon icon={info.icon} />
-                </div>
-                <h3>{info.title}</h3>
-                {info.details.map((detail, i) => (
-                  <p key={i}>{detail}</p>
-                ))}
-                {info.subtext && <small>{info.subtext}</small>}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        {/* ============ SOCIAL MEDIA ============ */}
+        <section className="ct-section ct-section-gray">
+          <div className="ct-container">
+            <div className="ct-section-head center">
+              <span className="ct-eyebrow"><span className="dot"></span> Follow Us</span>
+              <h2>Connect on social media</h2>
+              <p>Stay updated with our latest programs, events, and stories.</p>
+            </div>
 
-      {/* SOCIAL MEDIA */}
-      <section className="rlg-social-section">
-        <div className="rlg-container">
-          <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-            <div className="rlg-label"><FontAwesomeIcon icon={faGlobe} /> Follow Us</div>
-            <h2 className="rlg-section-title">Connect on Social Media</h2>
-          </div>
-          <div className="rlg-social-grid">
-            {socialLinks.map((social, index) => (
+            <div className="ct-social-grid">
               <a
-                key={index}
-                href={social.url}
+                href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rlg-social-card"
-                style={{ textDecoration: "none" }}
+                className="ct-social-card"
               >
-                <div className="rlg-social-icon" style={{ background: social.color }}>
-                  <FontAwesomeIcon icon={social.icon} style={{ color: "#fff", fontSize: "1.3rem" }} />
+                <div className="ct-social-icon facebook">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" />
+                  </svg>
                 </div>
-                <h4>{social.name}</h4>
-                <p>{social.handle}</p>
+                <h4>Facebook</h4>
+                <p>@RLG RWANDA</p>
               </a>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* CONTACT FORM */}
-      <section className="rlg-form-section">
-        <div className="rlg-container">
-          <div className="fade-up-1">
-            <div className="rlg-label"><FontAwesomeIcon icon={faPaperPlane} /> Send Us a Message</div>
-            <h2 className="rlg-section-title">We'd Love to Hear From You</h2>
-            <p className="rlg-section-sub" style={{ margin: "0 auto" }}>Fill out the form below and we'll get back to you within 2-3 business days</p>
-          </div>
-          
-          <div className="rlg-form-card fade-up-2">
-            <form onSubmit={handleSubmit}>
-              <div className="rlg-form-group">
-                <label>Your Name *</label>
-                <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="John Doe" required />
-              </div>
-              
-              <div className="rlg-form-group">
-                <label>Email Address *</label>
-                <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="john@example.com" required />
-              </div>
-              
-              <div className="rlg-form-group">
-                <label>Phone (optional)</label>
-                <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="+250..." />
-              </div>
-              
-              <div className="rlg-form-group">
-                <label>Subject *</label>
-                <div className="rlg-subject-group">
-                  {subjects.map((subject) => (
-                    <div
-                      key={subject.value}
-                      className={`rlg-subject-option ${formData.subject === subject.value ? "selected" : ""}`}
-                      onClick={() => setFormData({ ...formData, subject: subject.value })}
-                    >
-                      <FontAwesomeIcon icon={subject.icon} />
-                      {subject.label}
-                    </div>
-                  ))}
+              <a
+                href="https://twitter.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ct-social-card"
+              >
+                <div className="ct-social-icon twitter">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z" />
+                  </svg>
                 </div>
-              </div>
-              
-              <div className="rlg-form-group">
-                <label>Message *</label>
-                <textarea
-                  name="message"
-                  rows="5"
-                  value={formData.message}
-                  onChange={handleChange}
-                  placeholder="Tell us how we can help..."
-                  required
-                ></textarea>
-              </div>
-              
-              <button type="submit" className="rlg-submit-btn" disabled={isSubmitting}>
-                {isSubmitting ? <><FontAwesomeIcon icon={faSpinner} spin /> Sending...</> : <><FontAwesomeIcon icon={faPaperPlane} /> Send Message</>}
-              </button>
-            </form>
-          </div>
-        </div>
-      </section>
+                <h4>Twitter</h4>
+                <p>@RLG RWANDA</p>
+              </a>
 
-      {/* FAQ SECTION */}
-      <section className="rlg-faq">
-        <div className="rlg-container">
-          <div className="fade-up-1">
-            <div className="rlg-label"><FontAwesomeIcon icon={faQuestionCircle} /> FAQs</div>
-            <h2 className="rlg-section-title">Frequently Asked Questions</h2>
-            <p className="rlg-section-sub" style={{ margin: "0 auto" }}>Find quick answers to common questions</p>
+              <a
+                href="https://instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ct-social-card"
+              >
+                <div className="ct-social-icon instagram">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="2"
+                  >
+                    <rect x="2" y="2" width="20" height="20" rx="5" />
+                    <circle cx="12" cy="12" r="4" />
+                    <circle cx="17.5" cy="6.5" r="1" fill="white" stroke="none" />
+                  </svg>
+                </div>
+                <h4>Instagram</h4>
+                <p>@RLG RWANDA</p>
+              </a>
+            </div>
           </div>
-          <div className="rlg-faq-grid">
-            {faqs.map((faq, index) => (
-              <div key={index} className="rlg-faq-card fade-up-2" style={{ animationDelay: `${index * 0.1}s` }}>
-                <h3><FontAwesomeIcon icon={faQuestionCircle} style={{ color: "#22c55e" }} /> {faq.q}</h3>
-                <p>{faq.a}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
 
-      {/* QUICK RESPONSE PROMISE */}
-      <section className="rlg-promise">
-        <div className="rlg-container">
-          <h2><FontAwesomeIcon icon={faShieldHeart} /> Quick Response Promise</h2>
-          <p><FontAwesomeIcon icon={faClock} /> We reply to all messages within 2–3 business days.</p>
-        </div>
-      </section>
-    </div>
+        {/* ============ CONTACT FORM ============ */}
+        <section className="ct-section">
+          <div className="ct-container">
+            <div className="ct-section-head center">
+              <span className="ct-eyebrow"><span className="dot"></span> Send a Message</span>
+              <h2>We'd love to hear from you</h2>
+              <p>Fill out the form and we'll respond within 2–3 business days.</p>
+            </div>
+
+            <div className="ct-form-wrapper">
+              <form onSubmit={handleSubmit} noValidate>
+                <div className="ct-form-row">
+                  <div className="ct-field">
+                    <label htmlFor="name">Your Name *</label>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      placeholder="John Doe"
+                      value={form.name}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                  <div className="ct-field">
+                    <label htmlFor="email">Email Address *</label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      placeholder="john@example.com"
+                      value={form.email}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="ct-field">
+                  <label htmlFor="phone">Phone (optional)</label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    placeholder="+250..."
+                    value={form.phone}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className="ct-field">
+                  <label>Subject *</label>
+                  <div className="ct-subject-chips">
+                    {subjects.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        className={`ct-subject-chip ${
+                          form.subject === s ? "active" : ""
+                        }`}
+                        onClick={() => setForm({ ...form, subject: s })}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="ct-field">
+                  <label htmlFor="message">Message *</label>
+                  <textarea
+                    id="message"
+                    name="message"
+                    placeholder="Tell us how we can help..."
+                    value={form.message}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="ct-submit-btn"
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <>Sending...</>
+                  ) : (
+                    <>
+                      <svg viewBox="0 0 24 24">
+                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                      </svg>
+                      Send Message
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        {/* ============ FAQ ============ */}
+        <section className="ct-section ct-section-gray">
+          <div className="ct-container">
+            <div className="ct-section-head center">
+              <span className="ct-eyebrow"><span className="dot"></span> FAQs</span>
+              <h2>Frequently asked questions</h2>
+              <p>Quick answers to the questions we hear most often.</p>
+            </div>
+
+            <div className="ct-faq-grid">
+              {faqs.map((f, i) => (
+                <div key={i} className="ct-faq-card">
+                  <h4>{f.q}</h4>
+                  <p>{f.a}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ============ PROMISE ============ */}
+        <section className="ct-promise">
+          <div className="ct-promise-inner">
+            <div className="ct-promise-icon">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" />
+              </svg>
+            </div>
+            <h2>Quick Response Promise</h2>
+            <p>We reply to all messages within 2–3 business days.</p>
+          </div>
+        </section>
+
+      </div>
+    </>
   );
 }
