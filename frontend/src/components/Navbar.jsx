@@ -1,483 +1,506 @@
 import { useState, useEffect } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBars, faTimes, faHands } from '@fortawesome/free-solid-svg-icons';
-import { logo } from "../assets";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBars, faTimes, faHeart, faEnvelope, faPhone } from "@fortawesome/free-solid-svg-icons";
+import aboutImage from '../assets/about-image.jpg';
+import logo from '../assets/logo.png';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
+    document.body.style.overflow = isOpen ? "hidden" : "";
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "";
     };
   }, [isOpen]);
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 1024 && isOpen) {
-        setIsOpen(false);
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isOpen]);
-
+  // 4 links — matches the image (About, Programs, Impact, Stories) + a couple extra for full site
   const navLinks = [
-    { to: "/", label: "Home" },
     { to: "/about", label: "About" },
     { to: "/programs", label: "Programs" },
-    { to: "/blog", label: "Blog" },
+    { to: "/blog", label: "Stories" },
     { to: "/gallery", label: "Gallery" },
-    { to: "/getinvolved", label: "Get Involved" },
     { to: "/contact", label: "Contact" },
+    { to: "/donate", label: "Donate" },
   ];
 
   return (
     <>
-      <nav className={`rlg-navbar ${isScrolled ? 'rlg-scrolled' : ''}`}>
-        <div className="rlg-nav-container">
-          {/* Logo */}
-          <Link to="/" className="rlg-logo" onClick={() => setIsOpen(false)}>
-            <img src={logo} alt="RLG Logo" className="rlg-logo-img" />
-            <div className="rlg-logo-text">
-              <span className="rlg-logo-title">Raising Leaders</span>
-              <span className="rlg-logo-sub">of Generation</span>
-            </div>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <div className="rlg-nav-links">
-            {navLinks.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                className={({ isActive }) => 
-                  `rlg-nav-link ${isActive ? 'rlg-active' : ''}`
-                }
-              >
-                {link.label}
-              </NavLink>
-            ))}
-          </div>
-
-          {/* Desktop Donate Button */}
-          <div className="rlg-nav-buttons">
-            <Link to="/donate">
-              <button className="rlg-donate-btn">
-                <FontAwesomeIcon icon={faHands} /> Donate Now
-              </button>
-            </Link>
-          </div>
-
-          {/* Mobile Hamburger */}
-          <button className="rlg-hamburger" onClick={() => setIsOpen(!isOpen)}>
-            <FontAwesomeIcon icon={isOpen ? faTimes : faBars} size="lg" />
-          </button>
-        </div>
-
-        {/* Mobile Menu Overlay */}
-        {isOpen && <div className="rlg-overlay" onClick={() => setIsOpen(false)} />}
-
-        {/* Mobile Menu Drawer */}
-        <div className={`rlg-drawer ${isOpen ? 'rlg-drawer-open' : ''}`}>
-          <div className="rlg-drawer-header">
-            <img src={logo} alt="RLG Logo" className="rlg-drawer-logo" />
-            <div>
-              <div className="rlg-drawer-title">Rising Leaders</div>
-              <div className="rlg-drawer-sub">of Generation</div>
-            </div>
-            <button className="rlg-drawer-close" onClick={() => setIsOpen(false)}>
-              <FontAwesomeIcon icon={faTimes} />
-            </button>
-          </div>
-          
-          <div className="rlg-drawer-links">
-            {navLinks.map((link) => (
-              <NavLink
-                key={link.to}
-                to={link.to}
-                className={({ isActive }) => 
-                  `rlg-drawer-link ${isActive ? 'rlg-drawer-active' : ''}`
-                }
-                onClick={() => setIsOpen(false)}
-              >
-                {link.label}
-              </NavLink>
-            ))}
-          </div>
-          
-          <div className="rlg-drawer-footer">
-            <Link to="/donate" onClick={() => setIsOpen(false)}>
-              <button className="rlg-drawer-donate">Donate Now</button>
-            </Link>
-            <div className="rlg-drawer-contact">
-              <p>📧 raisingleaderofgeneration@gmail.com</p>
-              <p>📞 +250784769382 | +250792588272</p>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       <style>{`
-        /* Main Navbar Styles */
-        .rlg-navbar {
-          position: fixed;
+        /* ============================================================
+           NAVBAR — matches reference image
+           - Transparent over hero
+           - Serif wordmark logo
+           - Gold rectangular CTA
+           ============================================================ */
+        .pf-nav {
+          position: absolute;
           top: 0;
           left: 0;
           right: 0;
-          background: #ffffff;
           z-index: 1000;
-          transition: all 0.3s ease;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+          background: transparent;
+          transition: background .3s ease, box-shadow .3s ease, padding .3s ease;
         }
 
-        .rlg-navbar.rlg-scrolled {
-          background: rgba(255,255,255,0.98);
-          backdrop-filter: blur(10px);
-          box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        .pf-nav.is-scrolled {
+          position: fixed;
+          background: rgba(15, 33, 45, 0.92);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, .15);
         }
 
-        /* Container */
-        .rlg-nav-container {
-          max-width: 1280px;
+        .pf-nav__inner {
+          max-width: 1400px;
           margin: 0 auto;
-          padding: 0 2rem;
+          padding: 26px 48px;
           display: flex;
+          align-items: center;
           justify-content: space-between;
-          align-items: center;
-          height: 80px;
+          gap: 2rem;
+          transition: padding .3s ease;
         }
 
-        @media (max-width: 1024px) {
-          .rlg-nav-container {
-            height: 70px;
-            padding: 0 1.5rem;
-          }
+        .pf-nav.is-scrolled .pf-nav__inner {
+          padding: 16px 48px;
         }
 
-        @media (max-width: 768px) {
-          .rlg-nav-container {
-            height: 64px;
-            padding: 0 1rem;
-          }
-        }
-
-        /* Logo */
-        .rlg-logo {
+        /* ---------- Logo (single line, serif) ---------- */
+        .pf-nav__logo {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 12px;
+          font-family: 'Source Serif 4', 'Source Serif Pro', Georgia, serif;
+          font-size: 22px;
+          font-weight: 600;
+          color: #FFFFFF;
+          letter-spacing: -0.01em;
           text-decoration: none;
+          flex-shrink: 0;
         }
 
-        .rlg-logo-img {
-          width: 50px;
-          height: 50px;
-          object-fit: contain;
+        .pf-nav__logo:hover {
+          color: #FFFFFF;
         }
 
-        @media (max-width: 768px) {
-          .rlg-logo-img {
-            width: 40px;
-            height: 40px;
-          }
-        }
-
-        .rlg-logo-text {
-          display: flex;
-          flex-direction: column;
-        }
-
-        .rlg-logo-title {
-          font-size: 1.2rem;
-          font-weight: 800;
-          background: linear-gradient(135deg, #14532d, #22c55e);
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-          line-height: 1.2;
-        }
-
-        .rlg-logo-sub {
-          font-size: 0.7rem;
-          color: #6b7280;
-          margin-top: -2px;
-        }
-
-        @media (max-width: 640px) {
-          .rlg-logo-text {
-            display: none;
-          }
-        }
-
-        /* Desktop Navigation Links - Visible on large screens */
-        .rlg-nav-links {
+        .pf-nav__logo .logo-icon {
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          border: 1.5px solid #8FC1A3;
+          background: rgba(63, 140, 99, 0.18);
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          justify-content: center;
+          flex-shrink: 0;
+          overflow: hidden;
+          transition: transform .25s ease, border-color .25s ease;
         }
 
-        @media (max-width: 1024px) {
-          .rlg-nav-links {
-            display: none;
-          }
+        .pf-nav__logo:hover .logo-icon {
+          transform: scale(1.05);
+          border-color: #8FC1A3;
         }
 
-        .rlg-nav-link {
-          padding: 0.5rem 1rem;
-          color: #4b5563;
-          text-decoration: none;
+        .pf-nav__logo .logo-icon img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 50%;
+        }
+
+        /* ---------- Links ---------- */
+        .pf-nav__links {
+          display: flex;
+          align-items: center;
+          gap: 42px;
+          margin-left: auto;
+          margin-right: 42px;
+        }
+
+        .pf-nav__link {
+          font-family: 'Inter', system-ui, sans-serif;
+          font-size: 15px;
           font-weight: 500;
-          font-size: 0.95rem;
-          transition: all 0.3s ease;
-          border-radius: 0.5rem;
+          color: rgba(255, 255, 255, 0.88);
+          text-decoration: none;
+          letter-spacing: 0.01em;
+          transition: color .2s ease;
+          position: relative;
         }
 
-        .rlg-nav-link:hover {
-          color: #22c55e;
-          background: rgba(34,197,94,0.05);
+        .pf-nav__link::after {
+          content: '';
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: -6px;
+          height: 2px;
+          background: #F2C94C;
+          transform: scaleX(0);
+          transform-origin: left;
+          transition: transform .25s ease;
         }
 
-        .rlg-nav-link.rlg-active {
-          color: #14532d;
-          font-weight: 600;
-          background: rgba(34,197,94,0.1);
+        .pf-nav__link:hover {
+          color: #F2C94C;
         }
 
-        /* Desktop Donate Button */
-        .rlg-nav-buttons {
-          display: flex;
+        .pf-nav__link:hover::after,
+        .pf-nav__link.active::after {
+          transform: scaleX(1);
+        }
+
+        .pf-nav__link.active {
+          color: #F2C94C;
+        }
+
+        /* ---------- Scrolled variants ---------- */
+        .pf-nav.is-scrolled .pf-nav__logo {
+          color: #FFFFFF;
+        }
+
+        .pf-nav.is-scrolled .pf-nav__link {
+          color: rgba(255, 255, 255, 0.88);
+        }
+
+        .pf-nav.is-scrolled .pf-nav__link:hover,
+        .pf-nav.is-scrolled .pf-nav__link.active {
+          color: #F2C94C;
+        }
+
+        /* ---------- Get Involved CTA (gold rectangle) ---------- */
+        .pf-nav__cta {
+          display: inline-flex;
           align-items: center;
+          gap: 8px;
+          background: #F2C94C;
+          color: #0F212D;
+          font-family: 'Inter', system-ui, sans-serif;
+          font-size: 15px;
+          font-weight: 700;
+          padding: 14px 28px;
+          border-radius: 6px;
+          text-decoration: none;
+          white-space: nowrap;
+          box-shadow: 0 4px 14px rgba(242, 201, 76, 0.25);
+          transition: background .2s ease, transform .15s ease, box-shadow .2s ease;
         }
 
-        @media (max-width: 1024px) {
-          .rlg-nav-buttons {
-            display: none;
-          }
+        .pf-nav__cta:hover {
+          background: #E0B63A;
+          color: #0F212D;
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(242, 201, 76, 0.4);
         }
 
-        .rlg-donate-btn {
-          background: linear-gradient(135deg, #22c55e, #16a34a);
-          color: white;
-          padding: 0.6rem 1.5rem;
-          border-radius: 999px;
-          font-weight: 600;
-          font-size: 0.9rem;
-          border: none;
-          cursor: pointer;
-          transition: all 0.3s ease;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          box-shadow: 0 2px 8px rgba(34,197,94,0.2);
-        }
-
-        .rlg-donate-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(34,197,94,0.3);
-        }
-
-        /* Hamburger Button - Visible on mobile/tablet */
-        .rlg-hamburger {
+        /* ---------- Mobile Toggle ---------- */
+        .pf-nav__toggle {
           display: none;
           background: none;
           border: none;
+          font-size: 1.35rem;
+          color: #FFFFFF;
           cursor: pointer;
-          padding: 0.5rem;
-          border-radius: 0.5rem;
-          color: #4b5563;
-          z-index: 1001;
+          padding: .5rem;
+          margin-left: auto;
         }
 
-        .rlg-hamburger:hover {
-          background: rgba(0,0,0,0.05);
-        }
-
-        @media (max-width: 1024px) {
-          .rlg-hamburger {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-        }
-
-        /* Overlay */
-        .rlg-overlay {
+        /* ---------- Drawer Overlay ---------- */
+        .pf-drawer-overlay {
           position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0,0,0,0.5);
-          backdrop-filter: blur(4px);
+          inset: 0;
+          background: rgba(15, 33, 45, .55);
           z-index: 1001;
-          animation: fadeIn 0.3s ease;
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity .3s ease;
         }
 
-        /* Drawer */
-        .rlg-drawer {
+        .pf-drawer-overlay.open {
+          opacity: 1;
+          visibility: visible;
+        }
+
+        /* ---------- Drawer ---------- */
+        .pf-drawer {
           position: fixed;
           top: 0;
           right: 0;
-          width: 85%;
-          max-width: 350px;
           height: 100%;
-          background: #ffffff;
+          width: 86%;
+          max-width: 360px;
+          background: #FAF8F4;
           z-index: 1002;
           transform: translateX(100%);
-          transition: transform 0.3s ease;
+          transition: transform .3s ease;
           display: flex;
           flex-direction: column;
-          box-shadow: -5px 0 30px rgba(0,0,0,0.15);
+          box-shadow: -8px 0 30px rgba(15, 33, 45, .18);
         }
 
-        .rlg-drawer.rlg-drawer-open {
+        .pf-drawer.open {
           transform: translateX(0);
         }
 
-        @media (max-width: 480px) {
-          .rlg-drawer {
-            width: 100%;
-            max-width: none;
-          }
-        }
-
-        /* Drawer Header */
-        .rlg-drawer-header {
+        .pf-drawer__head {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
-          padding: 1.25rem;
-          border-bottom: 1px solid #e5e7eb;
-          background: linear-gradient(135deg, #f0fdf4, #ffffff);
+          gap: .6rem;
+          padding: 1.1rem 1.25rem;
+          border-bottom: 1px solid #E4DFD3;
+          background: #FFFFFF;
         }
 
-        .rlg-drawer-logo {
-          width: 45px;
-          height: 45px;
-          object-fit: contain;
+        .pf-drawer__head .logo-icon {
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          border: 1.5px solid #2F6B4F;
+          background: rgba(47, 107, 79, 0.1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          overflow: hidden;
         }
 
-        .rlg-drawer-title {
+        .pf-drawer__head .logo-icon img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 50%;
+        }
+
+        .pf-drawer__head b {
+          color: #152B3A;
           font-size: 1rem;
-          font-weight: 800;
-          background: linear-gradient(135deg, #14532d, #22c55e);
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
+          font-family: 'Source Serif 4', Georgia, serif;
+          font-weight: 600;
         }
 
-        .rlg-drawer-sub {
-          font-size: 0.65rem;
-          color: #6b7280;
-        }
-
-        .rlg-drawer-close {
+        .pf-drawer__close {
           margin-left: auto;
           background: none;
           border: none;
+          font-size: 1.2rem;
+          color: #6B7178;
           cursor: pointer;
-          padding: 0.5rem;
-          border-radius: 0.5rem;
-          color: #6b7280;
+          padding: .4rem;
         }
 
-        .rlg-drawer-close:hover {
-          background: rgba(0,0,0,0.05);
-        }
-
-        /* Drawer Links */
-        .rlg-drawer-links {
+        .pf-drawer__nav {
           flex: 1;
           padding: 1rem;
           display: flex;
           flex-direction: column;
-          gap: 0.25rem;
+          gap: .2rem;
           overflow-y: auto;
         }
 
-        .rlg-drawer-link {
-          display: block;
-          padding: 0.9rem 1rem;
-          color: #4b5563;
-          text-decoration: none;
-          font-weight: 500;
+        .pf-drawer__link {
+          padding: .85rem 1rem;
+          border-radius: .5rem;
           font-size: 1rem;
-          transition: all 0.3s ease;
-          border-radius: 0.5rem;
+          font-weight: 500;
+          color: #3A3F42;
+          text-decoration: none;
+          transition: background .2s ease, color .2s ease;
         }
 
-        .rlg-drawer-link:hover {
-          background: rgba(34,197,94,0.08);
-          color: #22c55e;
-          transform: translateX(5px);
+        .pf-drawer__link:hover {
+          background: rgba(47, 107, 79, .08);
+          color: #2F6B4F;
         }
 
-        .rlg-drawer-link.rlg-drawer-active {
-          background: linear-gradient(135deg, #22c55e, #16a34a);
-          color: white;
-          font-weight: 600;
+        .pf-drawer__link.active {
+          background: #2F6B4F;
+          color: #FFFFFF;
         }
 
-        /* Drawer Footer */
-        .rlg-drawer-footer {
+        .pf-drawer__foot {
           padding: 1.25rem;
-          border-top: 1px solid #e5e7eb;
-          background: #f9fafb;
+          border-top: 1px solid #E4DFD3;
+          background: #FFFFFF;
+          display: grid;
+          gap: .85rem;
         }
 
-        .rlg-drawer-donate {
-          width: 100%;
-          background: linear-gradient(135deg, #22c55e, #16a34a);
-          color: white;
-          padding: 0.8rem;
-          border-radius: 999px;
-          font-weight: 600;
-          font-size: 0.95rem;
-          border: none;
-          cursor: pointer;
-          transition: all 0.3s ease;
+        .pf-drawer__cta {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: .5rem;
+          background: #F2C94C;
+          color: #0F212D;
+          padding: .9rem;
+          border-radius: 6px;
+          font-weight: 700;
+          text-decoration: none;
+          transition: background .2s ease;
         }
 
-        .rlg-drawer-donate:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(34,197,94,0.3);
+        .pf-drawer__cta:hover {
+          background: #E0B63A;
         }
 
-        .rlg-drawer-contact {
-          margin-top: 1rem;
-          padding-top: 0.75rem;
-          border-top: 1px solid #e5e7eb;
+        .pf-drawer__contact {
+          font-size: .74rem;
+          color: #6B7178;
           text-align: center;
+          line-height: 1.9;
         }
 
-        .rlg-drawer-contact p {
-          font-size: 0.7rem;
-          color: #9ca3af;
-          margin: 0.25rem 0;
+        .pf-drawer__contact p {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: .4rem;
         }
 
-        /* Animations */
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
+        /* ---------- Responsive ---------- */
+        @media (max-width: 1100px) {
+          .pf-nav__links {
+            display: none;
+          }
+          .pf-nav__cta {
+            display: none;
+          }
+          .pf-nav__toggle {
+            display: inline-flex;
+          }
+          .pf-nav__inner {
+            padding: 20px 32px;
+          }
+          .pf-nav.is-scrolled .pf-nav__inner {
+            padding: 14px 32px;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .pf-nav__inner {
+            padding: 18px 22px;
+          }
+          .pf-nav.is-scrolled .pf-nav__inner {
+            padding: 12px 22px;
+          }
+          .pf-nav__logo {
+            font-size: 19px;
+          }
+          .pf-nav__logo .logo-icon {
+            width: 38px;
+            height: 38px;
+          }
         }
       `}</style>
+
+      {/* ---------- NAVBAR ---------- */}
+      <nav className={`pf-nav ${isScrolled ? "is-scrolled" : ""}`}>
+        <div className="pf-nav__inner">
+          {/* Logo — single line, serif */}
+          <Link to="/" className="pf-nav__logo" onClick={() => setIsOpen(false)}>
+            <span className="logo-icon">
+              <img src={logo} alt="Raising Leaders Of Generation logo" />
+            </span>
+            Raising Leaders Of Generation
+          </Link>
+
+          {/* Center/right links */}
+          <div className="pf-nav__links">
+            {navLinks.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                end={link.to === "/"}
+                className={({ isActive }) =>
+                  `pf-nav__link ${isActive ? "active" : ""}`
+                }
+              >
+                {link.label}
+              </NavLink>
+            ))}
+          </div>
+
+          {/* Gold CTA */}
+          <Link to="/getinvolved" className="pf-nav__cta">
+            Get Involved
+          </Link>
+
+          {/* Mobile toggle */}
+          <button
+            className="pf-nav__toggle"
+            onClick={() => setIsOpen(!isOpen)}
+            aria-label="Menu"
+          >
+            <FontAwesomeIcon icon={isOpen ? faTimes : faBars} />
+          </button>
+        </div>
+      </nav>
+
+      {/* ---------- DRAWER ---------- */}
+      <div
+        className={`pf-drawer-overlay ${isOpen ? "open" : ""}`}
+        onClick={() => setIsOpen(false)}
+      />
+      <aside className={`pf-drawer ${isOpen ? "open" : ""}`}>
+        <div className="pf-drawer__head">
+          <span className="logo-icon">
+            <img src={logo} alt="Raising Leaders Of Generation logo" />
+          </span>
+          <b>Raising Leaders Of Generation</b>
+          <button
+            className="pf-drawer__close"
+            onClick={() => setIsOpen(false)}
+            aria-label="Close"
+          >
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+        </div>
+
+        <nav className="pf-drawer__nav">
+          {navLinks.map((link) => (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.to === "/"}
+              className={({ isActive }) =>
+                `pf-drawer__link ${isActive ? "active" : ""}`
+              }
+              onClick={() => setIsOpen(false)}
+            >
+              {link.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="pf-drawer__foot">
+          <Link
+            to="/getinvolved"
+            className="pf-drawer__cta"
+            onClick={() => setIsOpen(false)}
+          >
+            Get Involved
+          </Link>
+          <div className="pf-drawer__contact">
+            <p>
+              <FontAwesomeIcon icon={faEnvelope} />{" "}
+              raisingleaderofgeneration@gmail.com
+            </p>
+            <p>
+              <FontAwesomeIcon icon={faPhone} /> +250 784 769 382 | +250 792 588 272
+            </p>
+          </div>
+        </div>
+      </aside>
     </>
   );
 };
