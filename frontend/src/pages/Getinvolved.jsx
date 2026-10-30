@@ -1,577 +1,1165 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faUsers, faChalkboardUser, faHandsHelping, faHandshake,
-  faEnvelope, faPhone, faMapMarkerAlt, faCheckCircle,
-  faArrowRight, faStar, faClock, faCertificate, faNetworkWired,
-  faCalendarAlt, faUserGraduate, faBuilding, faLeaf,
-  faMicrophone, faTrophy, faComments, faHeart, faSpinner
-} from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
-import { heroBg } from "../assets";
+import aboutImage from '../assets/mem.jpeg';
 
-/* ─── SweetAlert2 helpers ─────────────────────────────────────── */
-const showSuccess = (title, text) =>
-  Swal.fire({ icon: "success", title, text, confirmButtonColor: "#166534", timer: 3500, timerProgressBar: true });
-const showInfo = (title, text) =>
-  Swal.fire({ icon: "info", title, text, confirmButtonColor: "#166534" });
-const showError = (title, text) =>
-  Swal.fire({ icon: "error", title, text, confirmButtonColor: "#166534" });
 
-/* ─── API Service ─────────────────────────────────────────────── */
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-const api = {
-  submitGetInvolved: async (data) => {
-    const response = await fetch(`${API_URL}/getinvolved`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.message || 'Failed to submit application');
-    return result;
-  }
-};
+/* ---------- Interest options ---------- */
+const interests = [
+  {
+    value: "Start/Join an RLG Club",
+    label: "Start / Join an RLG Club",
+    desc: "Bring leadership programs to your school.",
+    iconPath:
+      "M22 10v6M2 10l10-5 10 5-10 5z M6 12v5c3 3 9 3 12 0v-5",
+  },
+  {
+    value: "Become a Mentor",
+    label: "Become a Mentor",
+    desc: "Guide young leaders with your experience.",
+    iconPath:
+      "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87",
+  },
+  {
+    value: "Volunteer at Events",
+    label: "Volunteer at Events",
+    desc: "Help organize debates, forums and bootcamps.",
+    iconPath:
+      "M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z",
+  },
+  {
+    value: "Partner My Organization",
+    label: "Partner My Organization",
+    desc: "Collaborate with us on shared goals.",
+    iconPath:
+      "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z",
+  },
+];
 
-/* ─── Component ───────────────────────────────────────────────── */
+/* ---------- Hero stats ---------- */
+const heroStats = [
+  { num: "1,200", plus: "+", label: "Active Volunteers" },
+  { num: "120", plus: "+", label: "Partner Schools" },
+  { num: "4", plus: "", label: "Ways to Join" },
+];
+
+/* ---------- Process steps ---------- */
+const processSteps = [
+  {
+    num: "01",
+    title: "We review your application",
+    desc: "Our team carefully reviews every submission within 2–3 business days to match you with the right opportunity.",
+  },
+  {
+    num: "02",
+    title: "A coordinator reaches out",
+    desc: "A community coordinator contacts you by phone or email to discuss next steps and answer your questions.",
+  },
+  {
+    num: "03",
+    title: "You receive your welcome pack",
+    desc: "You'll get onboarding materials, and if relevant, a formal introduction to your school or club.",
+  },
+];
+
 export default function Getinvolved() {
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     fullName: "",
     email: "",
     phone: "",
     organization: "",
     interest: "",
     district: "",
-    message: ""
+    message: "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
+
+  const selectInterest = (value) => {
+    // Toggle: if clicking the same one, deselect
+    if (form.interest === value) {
+      setForm({ ...form, interest: "" });
+    } else {
+      setForm({ ...form, interest: value });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!formData.fullName || !formData.email || !formData.interest) {
-      showError("Missing Information", "Please fill in your name, email, and how you'd like to help.");
+    if (!form.fullName || !form.email || !form.interest) {
+      Swal.fire({
+        icon: "warning",
+        title: "Missing Information",
+        text: "Please fill in your name, email, and an area of interest.",
+        confirmButtonColor: "#2f6b4f",
+      });
       return;
     }
-    
-    setIsSubmitting(true);
-    
+
+    setSubmitting(true);
     try {
-      await api.submitGetInvolved(formData);
-      showSuccess(
-        "Application Submitted! 🎉",
-        `Thank you ${formData.fullName}! An RLG coordinator will contact you within 3-5 days.`
-      );
-      setFormData({
+      const r = await fetch(`${API_URL}/getinvolved`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.message || "Submission failed");
+
+      Swal.fire({
+        icon: "success",
+        title: "Application Submitted!",
+        text: "Thank you! A coordinator will contact you soon.",
+        confirmButtonColor: "#2f6b4f",
+        timer: 3500,
+        timerProgressBar: true,
+      });
+      setForm({
         fullName: "",
         email: "",
         phone: "",
         organization: "",
         interest: "",
         district: "",
-        message: ""
+        message: "",
       });
-    } catch (error) {
-      showError("Submission Failed", error.message || "Failed to submit application. Please try again.");
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: err.message,
+        confirmButtonColor: "#2f6b4f",
+      });
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
-  const opportunities = [
-    {
-      id: 1,
-      title: "Start or Join an RLG Club",
-      target: "Students in schools",
-      icon: faUsers,
-      benefits: [
-        "Leadership training materials",
-        "Mentorship from RLG coordinators",
-        "Connection to national tournaments and forums"
-      ],
-      action: "Register Your Club",
-      value: "Start/Join an RLG Club"
-    },
-    {
-      id: 2,
-      title: "Become a Mentor or Trainer",
-      target: "Professionals, university students, retired teachers",
-      icon: faChalkboardUser,
-      benefits: [
-        "Public speaking and debate coaching",
-        "Entrepreneurship guidance",
-        "Leadership and governance training",
-        "Environmental action leadership"
-      ],
-      timeCommitment: "2–4 hours per month",
-      action: "Apply as Mentor",
-      value: "Become a Mentor"
-    },
-    {
-      id: 3,
-      title: "Volunteer at Events",
-      target: "Anyone passionate about youth development",
-      icon: faHandsHelping,
-      benefits: [
-        "Light the Flame debate tournaments",
-        "Leadership summits and forums",
-        "RLG Green Life campaigns",
-        "School bootcamps"
-      ],
-      action: "Volunteer Signup",
-      value: "Volunteer at Events"
-    },
-    {
-      id: 4,
-      title: "Partner Your Organization",
-      target: "Schools, universities, NGOs, private sector, government",
-      icon: faHandshake,
-      benefits: [
-        "Hosting events at your venue",
-        "Sponsoring program materials",
-        "Providing expert speakers",
-        "Funding scholarships for students"
-      ],
-      action: "Become a Partner",
-      value: "Partner My Organization"
-    }
-  ];
-
-  const faqs = [
-    {
-      q: "Is there a fee to join RLG as a student?",
-      a: "No. RLG programs are free for students in partner schools."
-    },
-    {
-      q: "Can I start an RLG Club if my school isn't partnered yet?",
-      a: "Yes. Contact us and we will reach out to your school administration."
-    },
-    {
-      q: "Do mentors get paid?",
-      a: "Currently, RLG mentors are volunteers, but we provide certificates, recognition, and networking opportunities."
-    }
-  ];
-
   return (
-    <div className="rlg-getinvolved-page pt-16">
+    <>
       <style>{`
-        .rlg-getinvolved-page { font-family: 'Lato', 'Segoe UI', sans-serif; color: #1a1a1a; }
-        :root {
-          --green-900: #14532d;
-          --green-800: #166534;
-          --green-700: #15803d;
-          --green-600: #16a34a;
-          --green-500: #22c55e;
-          --green-400: #4ade80;
-          --green-100: #dcfce7;
-          --green-50:  #f0fdf4;
-          --shadow-sm: 0 2px 8px rgba(21,128,61,.10);
-          --shadow-md: 0 8px 30px rgba(21,128,61,.15);
-          --shadow-lg: 0 20px 60px rgba(21,128,61,.20);
-          --radius:    1rem;
-          --transition: .3s cubic-bezier(.4,0,.2,1);
+        /* ============================================================
+           GET INVOLVED PAGE — matches HTML exactly
+           ============================================================ */
+        :root{
+          --navy:#152B3A;
+          --navy-deep:#0F212D;
+          --green:#2F6B4F;
+          --green-deep:#234F3B;
+          --green-light:#8FC1A3;
+          --green-bright:#3F8C63;
+          --gold:#F2C94C;
+          --gold-hover:#E0B63A;
+          --paper:#FAF8F4;
+          --paper-dim:#F1EDE3;
+          --line:#E4DFD3;
+          --text:#3A3F42;
+          --text-soft:#6B7178;
         }
 
-        @keyframes fadeUp { from { opacity:0; transform:translateY(30px) } to { opacity:1; transform:none } }
-        @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
-        
-        .fade-up { animation: fadeUp .7s both; }
-        .fade-up-1 { animation: fadeUp .7s .1s both; }
-        .fade-up-2 { animation: fadeUp .7s .2s both; }
-        .fade-up-3 { animation: fadeUp .7s .3s both; }
-
-        .rlg-container { max-width: 1200px; margin: 0 auto; padding: 0 1.25rem; }
-
-        /* Hero Section */
-        .rlg-hero {
-          position: relative; min-height: 50vh; display: flex; align-items: center;
-          background: linear-gradient(135deg, #0a2a1a 0%, #14532d 100%);
-          overflow: hidden;
+        .gi-page{
+          background:var(--paper);
+          color:var(--text);
+          font-family:'Inter', system-ui, -apple-system, sans-serif;
+          font-size:16px;
+          line-height:1.5;
         }
-        .rlg-hero::before {
-          content:''; position:absolute; inset:0;
-          background: url(${heroBg}) center/cover no-repeat;
-          opacity:.12;
-        }
-        .rlg-hero-content { position: relative; z-index: 2; padding: 5rem 0; text-align: center; }
-        .rlg-hero h1 { font-family:'Playfair Display',Georgia,serif; font-size:clamp(2.5rem,5vw,4rem); font-weight:800; color:#fff; margin-bottom:1rem; }
-        .rlg-hero p { color:rgba(255,255,255,.85); font-size:1.1rem; max-width:700px; margin:0 auto; line-height:1.7; }
+        .gi-page *{ box-sizing:border-box; }
+        .gi-page img{ max-width:100%; display:block; }
 
-        /* Section Label */
-        .rlg-label {
-          display:inline-flex;align-items:center;gap:.5rem;
-          background:linear-gradient(135deg, #dcfce7, #f0fdf4);
-          color:#14532d;
-          padding:.5rem 1.25rem;
-          border-radius:999px;
-          font-size:.8rem;
+        .gi-container{
+          max-width:1280px;
+          margin:0 auto;
+          padding:0 48px;
+        }
+        .gi-section{
+          padding:100px 0;
+          position:relative;
+        }
+        .gi-section-gray{
+          background:linear-gradient(180deg, var(--paper) 0%, var(--paper-dim) 100%);
+        }
+
+        .gi-eyebrow{
+          display:inline-flex;
+          align-items:center;
+          gap:8px;
+          font-size:12.5px;
           font-weight:700;
-          letter-spacing:.05em;
+          letter-spacing:0.12em;
           text-transform:uppercase;
-          margin-bottom:1rem;
-          border:1px solid rgba(34,197,94,0.3);
+          color:var(--green);
+          margin-bottom:16px;
         }
-        .rlg-section-title { font-family:'Playfair Display',Georgia,serif; font-size:clamp(1.8rem,3vw,2.6rem); font-weight:800; color:#111; margin-bottom:.75rem; }
-        .rlg-section-sub { color:#6b7280; font-size:1rem; line-height:1.7; max-width:580px; }
+        .gi-eyebrow .dot{
+          width:6px; height:6px;
+          border-radius:50%;
+          background:var(--gold);
+        }
 
-        /* Opportunities Grid */
-        .rlg-opportunities { padding: 5rem 0; background: #fff; }
-        .rlg-opp-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 2rem;
-          margin-top: 2rem;
+        /* ---------- Page Hero ---------- */
+        .gi-hero{
+          position:relative;
+          background:linear-gradient(135deg, var(--navy) 0%, var(--green-deep) 100%);
+          padding:140px 0 100px;
+          overflow:hidden;
+          color:#fff;
+          text-align:center;
         }
-        @media (max-width: 900px) { .rlg-opp-grid { grid-template-columns: 1fr; } }
-        .rlg-opp-card {
-          background: #fff;
-          border-radius: var(--radius);
-          padding: 2rem;
-          box-shadow: var(--shadow-sm);
-          border: 1px solid #e5e7eb;
-          transition: var(--transition);
-          position: relative;
-          overflow: hidden;
+        .gi-hero::before{
+          content:'';
+          position:absolute;
+          top:-40%; left:-10%;
+          width:70%; height:180%;
+          background:radial-gradient(ellipse, rgba(143,193,163,0.25), transparent 65%);
+          pointer-events:none;
         }
-        .rlg-opp-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 4px;
-          background: linear-gradient(90deg, #22c55e, #16a34a);
-          transform: scaleX(0);
-          transform-origin: left;
-          transition: var(--transition);
+        .gi-hero::after{
+          content:'';
+          position:absolute;
+          bottom:-50%; right:-10%;
+          width:60%; height:160%;
+          background:radial-gradient(ellipse, rgba(242,201,76,0.12), transparent 65%);
+          pointer-events:none;
         }
-        .rlg-opp-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); }
-        .rlg-opp-card:hover::before { transform: scaleX(1); }
-        .rlg-opp-icon {
-          width: 4rem; height: 4rem; background: linear-gradient(135deg, #22c55e, #16a34a);
-          border-radius: 1rem; display: flex; align-items: center; justify-content: center;
-          margin-bottom: 1rem;
+        .gi-hero-inner{
+          position:relative;
+          z-index:1;
+          max-width:760px;
+          margin:0 auto;
+          padding:0 24px;
         }
-        .rlg-opp-icon svg { color: #fff; font-size: 1.5rem; }
-        .rlg-opp-card h3 { font-size: 1.3rem; font-weight: 800; color: #14532d; margin-bottom: 0.3rem; }
-        .rlg-opp-target { color: #22c55e; font-size: 0.8rem; font-weight: 600; margin-bottom: 1rem; }
-        .rlg-opp-benefits { list-style: none; padding: 0; margin: 1rem 0; }
-        .rlg-opp-benefits li { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0; color: #6b7280; font-size: 0.85rem; }
-        .rlg-opp-benefits li svg { color: #22c55e; font-size: 0.8rem; }
-        .rlg-time-badge { display: inline-block; background: var(--green-100); padding: 0.3rem 0.8rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; color: #14532d; margin: 0.5rem 0; }
-        .rlg-opp-btn {
-          background: linear-gradient(135deg, #22c55e, #16a34a);
-          color: #fff; padding: 0.7rem 1.5rem; border-radius: 999px;
-          font-weight: 600; font-size: 0.85rem; border: none; cursor: pointer;
-          transition: var(--transition); width: 100%; margin-top: 1rem;
+        .gi-hero .gi-eyebrow{
+          color:var(--green-light);
+          justify-content:center;
         }
-        .rlg-opp-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(34,197,94,0.3); }
+        .gi-hero h1{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-weight:600;
+          font-size:clamp(38px, 5vw, 60px);
+          line-height:1.1;
+          letter-spacing:-0.02em;
+          color:#fff;
+          margin-bottom:20px;
+        }
+        .gi-hero h1 .accent{ color:var(--gold); }
+        .gi-hero p{
+          font-size:clamp(16px, 1.3vw, 19px);
+          line-height:1.65;
+          color:rgba(255,255,255,0.82);
+          max-width:620px;
+          margin:0 auto 32px;
+        }
 
-        /* Form Section */
-        .rlg-form-section { background: var(--green-50); padding: 5rem 0; }
-        .rlg-form-card {
-          background: #fff;
-          border-radius: var(--radius);
-          padding: 2rem;
-          box-shadow: var(--shadow-md);
-          max-width: 800px;
-          margin: 0 auto;
+        .gi-hero-stats{
+          display:flex;
+          justify-content:center;
+          gap:48px;
+          flex-wrap:wrap;
+          margin-top:40px;
+          padding-top:36px;
+          border-top:1px solid rgba(255,255,255,0.12);
         }
-        .rlg-form-group { margin-bottom: 1.2rem; }
-        .rlg-form-group label { display: block; font-weight: 600; color: #14532d; margin-bottom: 0.5rem; }
-        .rlg-form-group input, .rlg-form-group select, .rlg-form-group textarea {
-          width: 100%;
-          padding: 0.8rem;
-          border: 1px solid #e5e7eb;
-          border-radius: 0.5rem;
-          font-size: 0.9rem;
-          outline: none;
-          transition: var(--transition);
+        .gi-hero-stat .num{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:32px;
+          font-weight:700;
+          color:#fff;
+          line-height:1;
+          margin-bottom:6px;
         }
-        .rlg-form-group input:focus, .rlg-form-group select:focus, .rlg-form-group textarea:focus {
-          border-color: #22c55e;
-          box-shadow: 0 0 0 3px rgba(34,197,94,0.1);
+        .gi-hero-stat .num .plus{ color:var(--gold); }
+        .gi-hero-stat .lbl{
+          font-size:13px;
+          color:rgba(255,255,255,0.65);
+          letter-spacing:0.02em;
         }
-        .rlg-radio-group {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 1rem;
-          margin-top: 0.5rem;
-        }
-        .rlg-radio-group label {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-weight: normal;
-          cursor: pointer;
-        }
-        .rlg-radio-group input { width: auto; }
-        .rlg-submit-btn {
-          background: linear-gradient(135deg, #22c55e, #16a34a);
-          color: #fff; padding: 1rem; border-radius: 999px;
-          font-weight: 700; font-size: 1rem; border: none; cursor: pointer;
-          transition: var(--transition); width: 100%;
-        }
-        .rlg-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(34,197,94,0.4); }
 
-        /* Steps Section */
-        .rlg-steps { padding: 5rem 0; background: #fff; }
-        .rlg-steps-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 2rem;
-          margin-top: 2rem;
+        /* ---------- Section head ---------- */
+        .gi-section-head{
+          max-width:640px;
+          margin-bottom:48px;
         }
-        @media (max-width: 900px) { .rlg-steps-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 600px) { .rlg-steps-grid { grid-template-columns: 1fr; } }
-        .rlg-step-card {
-          text-align: center;
-          padding: 1.5rem;
-          background: var(--green-50);
-          border-radius: var(--radius);
-          transition: var(--transition);
+        .gi-section-head.center{
+          margin-left:auto;
+          margin-right:auto;
+          text-align:center;
         }
-        .rlg-step-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-sm); }
-        .rlg-step-number {
-          width: 3rem; height: 3rem; background: linear-gradient(135deg, #22c55e, #16a34a);
-          border-radius: 50%; display: flex; align-items: center; justify-content: center;
-          margin: 0 auto 1rem; color: #fff; font-weight: 800; font-size: 1.2rem;
+        .gi-section-head h2{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-weight:600;
+          font-size:clamp(28px, 3vw, 38px);
+          line-height:1.18;
+          letter-spacing:-0.02em;
+          color:var(--navy);
+          margin-bottom:14px;
         }
-        .rlg-step-card h3 { font-weight: 700; color: #14532d; margin-bottom: 0.5rem; }
-        .rlg-step-card p { color: #6b7280; font-size: 0.85rem; }
+        .gi-section-head p{
+          font-size:15.5px;
+          color:var(--text-soft);
+          line-height:1.7;
+        }
 
-        /* FAQ Section */
-        .rlg-faq { background: var(--green-50); padding: 5rem 0; }
-        .rlg-faq-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 1.5rem;
-          margin-top: 2rem;
+        /* ---------- Main grid ---------- */
+        .gi-involved-grid{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:64px;
+          align-items:start;
         }
-        @media (max-width: 768px) { .rlg-faq-grid { grid-template-columns: 1fr; } }
-        .rlg-faq-card {
-          background: #fff;
-          border-radius: var(--radius);
-          padding: 1.5rem;
-          border: 1px solid #e5e7eb;
-          transition: var(--transition);
+
+        .gi-involved-left .gi-eyebrow{ color:var(--green); }
+        .gi-involved-left h2{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-weight:600;
+          font-size:clamp(26px, 2.8vw, 34px);
+          line-height:1.2;
+          letter-spacing:-0.02em;
+          color:var(--navy);
+          margin-bottom:16px;
         }
-        .rlg-faq-card:hover { box-shadow: var(--shadow-sm); border-color: #22c55e; }
-        .rlg-faq-card h3 { font-weight: 800; color: #14532d; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
-        .rlg-faq-card p { color: #6b7280; line-height: 1.6; }
-
-        /* CTA Section */
-        .rlg-cta-section { background: linear-gradient(135deg, #0a2a1a, #14532d); padding: 4rem 0; text-align: center; }
-        .rlg-cta-section h2 { color: #fff; font-size: 1.8rem; margin-bottom: 1rem; font-family: 'Playfair Display', serif; }
-        .rlg-cta-section p { color: rgba(255,255,255,.8); max-width: 600px; margin: 0 auto; }
-
-        .btn-outline-rlg {
-          display: inline-flex; align-items: center; gap: .5rem;
-          background: transparent; color: #fff; padding: .8rem 1.8rem;
-          border-radius: 999px; font-weight: 700; border: 2px solid rgba(255,255,255,0.5);
-          cursor: pointer; transition: var(--transition); text-decoration: none;
+        .gi-involved-left > p{
+          font-size:15.5px;
+          color:var(--text-soft);
+          line-height:1.7;
+          margin-bottom:32px;
         }
-        .btn-outline-rlg:hover { background: rgba(255,255,255,0.1); border-color: #fff; transform: translateY(-2px); }
 
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Lato:wght@400;700&display=swap');
+        /* ---------- Interest cards ---------- */
+        .gi-interest-list{
+          display:grid;
+          gap:14px;
+          margin-bottom:40px;
+        }
+        .gi-interest-card{
+          display:flex;
+          align-items:center;
+          gap:18px;
+          text-align:left;
+          width:100%;
+          padding:20px 22px;
+          border-radius:14px;
+          border:1.5px solid var(--line);
+          background:#fff;
+          cursor:pointer;
+          transition:all 0.25s ease;
+          font-family:'Inter', sans-serif;
+          position:relative;
+          overflow:hidden;
+        }
+        .gi-interest-card::before{
+          content:'';
+          position:absolute;
+          left:0; top:0; bottom:0;
+          width:4px;
+          background:var(--green);
+          transform:scaleY(0);
+          transform-origin:top;
+          transition:transform 0.25s ease;
+        }
+        .gi-interest-card:hover{
+          border-color:var(--green-light);
+          transform:translateX(4px);
+          box-shadow:0 8px 24px rgba(21,43,58,0.08);
+        }
+        .gi-interest-card.active{
+          border-color:var(--green);
+          background:linear-gradient(135deg, rgba(47,107,79,0.06), rgba(143,193,163,0.08));
+          box-shadow:0 8px 24px rgba(47,107,79,0.15);
+        }
+        .gi-interest-card.active::before{
+          transform:scaleY(1);
+        }
+
+        .gi-interest-icon{
+          width:52px; height:52px;
+          border-radius:12px;
+          flex-shrink:0;
+          background:linear-gradient(135deg, var(--green) 0%, var(--green-deep) 100%);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          box-shadow:0 6px 16px rgba(47,107,79,0.25);
+          transition:transform 0.25s ease;
+        }
+        .gi-interest-card:hover .gi-interest-icon{
+          transform:scale(1.06);
+        }
+        .gi-interest-icon svg{
+          width:24px; height:24px;
+          stroke:#fff;
+          fill:none;
+          stroke-width:1.8;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+        .gi-interest-content{ flex:1; }
+        .gi-interest-content b{
+          display:block;
+          font-size:15px;
+          font-weight:700;
+          color:var(--navy);
+          margin-bottom:4px;
+          line-height:1.35;
+        }
+        .gi-interest-content span{
+          font-size:13.5px;
+          color:var(--text-soft);
+          line-height:1.5;
+        }
+
+        .gi-interest-check{
+          width:24px; height:24px;
+          border-radius:50%;
+          border:2px solid var(--line);
+          flex-shrink:0;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          transition:all 0.2s ease;
+        }
+        .gi-interest-card.active .gi-interest-check{
+          background:var(--green);
+          border-color:var(--green);
+        }
+        .gi-interest-check svg{
+          width:12px; height:12px;
+          stroke:#fff;
+          fill:none;
+          stroke-width:3;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+          opacity:0;
+          transition:opacity 0.2s ease;
+        }
+        .gi-interest-card.active .gi-interest-check svg{
+          opacity:1;
+        }
+
+        /* Image block */
+        .gi-involved-image{
+          position:relative;
+          border-radius:16px;
+          overflow:hidden;
+          height:320px;
+          box-shadow:0 20px 48px rgba(21,43,58,0.14);
+        }
+        .gi-involved-image img{
+          width:100%; height:100%;
+          object-fit:cover;
+        }
+        .gi-involved-image::after{
+          content:'';
+          position:absolute;
+          inset:0;
+          background:linear-gradient(180deg, rgba(15,33,45,0) 40%, rgba(15,33,45,0.8) 100%);
+        }
+        .gi-involved-caption{
+          position:absolute;
+          bottom:22px; left:24px; right:24px;
+          z-index:2;
+          color:#fff;
+        }
+        .gi-involved-caption .title{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:20px;
+          font-weight:600;
+          margin-bottom:4px;
+        }
+        .gi-involved-caption .desc{
+          font-size:13.5px;
+          color:rgba(255,255,255,0.82);
+        }
+
+        /* ---------- Form card ---------- */
+        .gi-form-card{
+          background:#fff;
+          border:1px solid var(--line);
+          border-radius:18px;
+          padding:44px 40px;
+          box-shadow:0 24px 64px rgba(21,43,58,0.1);
+          position:sticky;
+          top:32px;
+          overflow:hidden;
+        }
+        .gi-form-card::before{
+          content:'';
+          position:absolute;
+          top:0; left:0; right:0;
+          height:4px;
+          background:linear-gradient(90deg, var(--green), var(--green-light), var(--gold));
+        }
+        .gi-form-header{ margin-bottom:28px; }
+        .gi-form-header h3{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:24px;
+          font-weight:600;
+          color:var(--navy);
+          margin-bottom:8px;
+        }
+        .gi-form-header p{
+          font-size:14px;
+          color:var(--text-soft);
+          line-height:1.6;
+        }
+
+        .gi-form-row{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:16px;
+        }
+        .gi-form-field{ margin-bottom:18px; }
+        .gi-form-field label{
+          display:block;
+          font-size:13px;
+          font-weight:600;
+          color:var(--navy);
+          margin-bottom:8px;
+        }
+        .gi-form-field label .required{
+          color:var(--green);
+          margin-left:2px;
+        }
+        .gi-form-field input,
+        .gi-form-field select,
+        .gi-form-field textarea{
+          width:100%;
+          padding:13px 16px;
+          border:1.5px solid var(--line);
+          border-radius:10px;
+          font-size:14.5px;
+          font-family:'Inter', sans-serif;
+          color:var(--text);
+          background:var(--paper);
+          outline:none;
+          transition:border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+        .gi-form-field textarea{
+          min-height:110px;
+          resize:vertical;
+          line-height:1.6;
+        }
+        .gi-form-field select{
+          appearance:none;
+          -webkit-appearance:none;
+          -moz-appearance:none;
+          background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7178' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+          background-repeat:no-repeat;
+          background-position:right 14px center;
+          background-size:16px;
+          padding-right:44px;
+          cursor:pointer;
+        }
+        .gi-form-field input:focus,
+        .gi-form-field select:focus,
+        .gi-form-field textarea:focus{
+          border-color:var(--green);
+          background:#fff;
+          box-shadow:0 0 0 4px rgba(47,107,79,0.1);
+        }
+        .gi-form-field input::placeholder,
+        .gi-form-field textarea::placeholder{
+          color:#9AA0A6;
+        }
+
+        .gi-selected-badge{
+          display:flex;
+          align-items:center;
+          gap:8px;
+          background:rgba(47,107,79,0.08);
+          border:1px solid var(--green-light);
+          border-radius:8px;
+          padding:10px 14px;
+          margin-bottom:18px;
+          font-size:13px;
+          color:var(--green-deep);
+          font-weight:600;
+        }
+        .gi-selected-badge svg{
+          width:14px; height:14px;
+          stroke:var(--green);
+          fill:none;
+          stroke-width:2.4;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+          flex-shrink:0;
+        }
+        .gi-selected-badge .label{
+          color:var(--text-soft);
+          font-weight:500;
+        }
+
+        .gi-submit-btn{
+          width:100%;
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          gap:10px;
+          background:linear-gradient(135deg, var(--green) 0%, var(--green-deep) 100%);
+          color:#fff;
+          font-size:15.5px;
+          font-weight:700;
+          font-family:'Inter', sans-serif;
+          padding:17px 32px;
+          border-radius:10px;
+          border:none;
+          cursor:pointer;
+          transition:transform 0.15s ease, box-shadow 0.2s ease;
+          box-shadow:0 8px 24px rgba(47,107,79,0.32);
+          margin-top:6px;
+        }
+        .gi-submit-btn:hover:not(:disabled){
+          transform:translateY(-2px);
+          box-shadow:0 12px 32px rgba(47,107,79,0.4);
+        }
+        .gi-submit-btn:active:not(:disabled){ transform:translateY(0); }
+        .gi-submit-btn:disabled{ opacity:0.7; cursor:not-allowed; }
+        .gi-submit-btn svg{
+          width:17px; height:17px;
+          stroke:currentColor;
+          fill:none;
+          stroke-width:2;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+        .gi-form-footnote{
+          font-size:12px;
+          color:var(--text-soft);
+          text-align:center;
+          margin-top:14px;
+          line-height:1.6;
+        }
+
+        /* ---------- Process grid ---------- */
+        .gi-process-grid{
+          display:grid;
+          grid-template-columns:repeat(3, 1fr);
+          gap:28px;
+        }
+        .gi-process-card{
+          background:#fff;
+          border:1px solid var(--line);
+          border-radius:16px;
+          padding:36px 30px;
+          transition:transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+          position:relative;
+          overflow:hidden;
+        }
+        .gi-process-card::before{
+          content:'';
+          position:absolute;
+          top:0; left:0;
+          width:100%; height:3px;
+          background:linear-gradient(90deg, var(--green), var(--green-light));
+          opacity:0;
+          transition:opacity 0.25s ease;
+        }
+        .gi-process-card:hover{
+          transform:translateY(-6px);
+          box-shadow:0 24px 48px rgba(21,43,58,0.12);
+          border-color:var(--green-light);
+        }
+        .gi-process-card:hover::before{ opacity:1; }
+        .gi-process-num{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:44px;
+          font-weight:700;
+          line-height:1;
+          color:var(--green-light);
+          margin-bottom:18px;
+          display:block;
+        }
+        .gi-process-card h3{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:19px;
+          font-weight:600;
+          color:var(--navy);
+          margin-bottom:10px;
+          line-height:1.35;
+        }
+        .gi-process-card p{
+          font-size:14px;
+          color:var(--text-soft);
+          line-height:1.7;
+        }
+
+        /* ---------- CTA grid ---------- */
+        .gi-cta-grid{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:28px;
+        }
+        .gi-cta-card{
+          border-radius:18px;
+          padding:48px 40px;
+          position:relative;
+          overflow:hidden;
+          display:flex;
+          flex-direction:column;
+        }
+        .gi-cta-donate{
+          background:linear-gradient(135deg, var(--green) 0%, var(--green-deep) 100%);
+          color:#fff;
+        }
+        .gi-cta-donate::before{
+          content:'';
+          position:absolute;
+          top:-60%; right:-20%;
+          width:80%; height:220%;
+          background:radial-gradient(ellipse, rgba(242,201,76,0.2), transparent 65%);
+          pointer-events:none;
+        }
+        .gi-cta-contact{
+          background:#fff;
+          border:1px solid var(--line);
+          border-left:4px solid var(--green);
+        }
+        .gi-cta-icon{
+          width:56px; height:56px;
+          border-radius:14px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          margin-bottom:22px;
+          position:relative;
+          z-index:1;
+        }
+        .gi-cta-donate .gi-cta-icon{
+          background:rgba(255,255,255,0.15);
+          border:1px solid rgba(255,255,255,0.25);
+          backdrop-filter:blur(8px);
+        }
+        .gi-cta-contact .gi-cta-icon{
+          background:linear-gradient(135deg, var(--green) 0%, var(--green-deep) 100%);
+          box-shadow:0 8px 22px rgba(47,107,79,0.3);
+        }
+        .gi-cta-icon svg{
+          width:26px; height:26px;
+          stroke:#fff;
+          fill:none;
+          stroke-width:1.8;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+        .gi-cta-card h3{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:24px;
+          font-weight:600;
+          margin-bottom:12px;
+          line-height:1.25;
+          position:relative;
+          z-index:1;
+        }
+        .gi-cta-donate h3{ color:#fff; }
+        .gi-cta-contact h3{ color:var(--navy); }
+        .gi-cta-card p{
+          font-size:15px;
+          line-height:1.7;
+          margin-bottom:28px;
+          position:relative;
+          z-index:1;
+          flex:1;
+        }
+        .gi-cta-donate p{ color:rgba(255,255,255,0.85); }
+        .gi-cta-contact p{ color:var(--text-soft); }
+        .gi-cta-actions{
+          display:flex;
+          gap:12px;
+          flex-wrap:wrap;
+          position:relative;
+          z-index:1;
+        }
+
+        .gi-btn-white{
+          display:inline-flex;
+          align-items:center;
+          gap:10px;
+          background:#fff;
+          color:var(--green-deep);
+          font-size:15px;
+          font-weight:700;
+          padding:15px 28px;
+          border-radius:8px;
+          border:none;
+          cursor:pointer;
+          text-decoration:none;
+          transition:transform 0.15s ease, box-shadow 0.2s ease;
+          box-shadow:0 8px 24px rgba(0,0,0,0.15);
+          font-family:'Inter', sans-serif;
+        }
+        .gi-btn-white:hover{
+          transform:translateY(-2px);
+          box-shadow:0 12px 32px rgba(0,0,0,0.22);
+        }
+        .gi-btn-white svg{
+          width:16px; height:16px;
+          stroke:currentColor;
+          fill:none;
+          stroke-width:2.2;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+
+        .gi-btn-primary{
+          display:inline-flex;
+          align-items:center;
+          gap:10px;
+          background:linear-gradient(135deg, var(--green) 0%, var(--green-deep) 100%);
+          color:#fff;
+          font-size:15px;
+          font-weight:700;
+          padding:15px 28px;
+          border-radius:8px;
+          border:none;
+          cursor:pointer;
+          text-decoration:none;
+          transition:transform 0.15s ease, box-shadow 0.2s ease;
+          box-shadow:0 8px 24px rgba(47,107,79,0.3);
+          font-family:'Inter', sans-serif;
+        }
+        .gi-btn-primary:hover{
+          transform:translateY(-2px);
+          box-shadow:0 12px 32px rgba(47,107,79,0.4);
+        }
+        .gi-btn-primary svg{
+          width:16px; height:16px;
+          stroke:currentColor;
+          fill:none;
+          stroke-width:2.2;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+
+        /* ---------- Responsive ---------- */
+        @media (max-width: 1024px){
+          .gi-container{ padding:0 32px; }
+          .gi-hero{ padding:110px 0 80px; }
+          .gi-involved-grid{ grid-template-columns:1fr; gap:48px; }
+          .gi-form-card{ position:static; }
+          .gi-process-grid{ grid-template-columns:1fr; max-width:520px; margin:0 auto; }
+          .gi-cta-grid{ grid-template-columns:1fr; }
+        }
+        @media (max-width: 640px){
+          .gi-container{ padding:0 22px; }
+          .gi-section{ padding:72px 0; }
+          .gi-hero{ padding:90px 0 70px; }
+          .gi-hero-stats{ gap:32px; }
+          .gi-form-card{ padding:32px 24px; }
+          .gi-form-row{ grid-template-columns:1fr; gap:0; }
+          .gi-cta-card{ padding:36px 26px; }
+          .gi-cta-actions{ flex-direction:column; }
+          .gi-btn-white, .gi-btn-primary{ width:100%; justify-content:center; }
+        }
+        @media (prefers-reduced-motion: reduce){
+          .gi-page *{ transition:none !important; animation:none !important; }
+        }
       `}</style>
 
-      {/* HERO SECTION */}
-      <section className="rlg-hero">
-        <div className="rlg-hero-content">
-          <div className="rlg-container">
-            <div className="fade-up">
-              <h1>Join the Movement</h1>
-              <p>Get Involved with RLG – Be part of the next generation of leaders shaping Rwanda's future</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <div className="gi-page">
 
-      {/* INTRO TEXT */}
-      <div className="rlg-container" style={{ marginTop: "2rem" }}>
-        <div className="rlg-mission-quote" style={{ background: "linear-gradient(135deg, #f0fdf4, #dcfce7)", padding: "2rem", borderRadius: "var(--radius)", textAlign: "center" }}>
-          <p style={{ fontSize: "1.1rem", color: "#14532d" }}>
-            By the next 7 years, RLG aims to expand across Rwanda and build a network of young leaders influencing governance, business, and social change. 
-            <strong> Be part of that journey.</strong>
-          </p>
-        </div>
-      </div>
+        {/* ============ PAGE HERO ============ */}
+        <section className="gi-hero">
+          <div className="gi-hero-inner">
+            <span className="gi-eyebrow"><span className="dot"></span> Join the Movement</span>
+            <h1>Get <span className="accent">Involved</span></h1>
+            <p>
+              Start a club, mentor a student, volunteer at events, or partner with us —
+              there's a place for everyone in this movement.
+            </p>
 
-      {/* FOUR WAYS TO PARTICIPATE */}
-      <section className="rlg-opportunities">
-        <div className="rlg-container">
-          <div className="fade-up-1">
-            <div className="rlg-label"><FontAwesomeIcon icon={faStar} /> Four Ways to Participate</div>
-            <h2 className="rlg-section-title">Choose Your Path</h2>
-            <p className="rlg-section-sub" style={{ margin: "0 auto" }}>Find the opportunity that fits your skills and passion</p>
-          </div>
-          <div className="rlg-opp-grid">
-            {opportunities.map((opp, index) => (
-              <div key={opp.id} className="rlg-opp-card fade-up" style={{ animationDelay: `${index * 0.1}s` }}>
-                <div className="rlg-opp-icon">
-                  <FontAwesomeIcon icon={opp.icon} />
-                </div>
-                <h3>{opp.title}</h3>
-                <div className="rlg-opp-target">
-                  <FontAwesomeIcon icon={faUserGraduate} style={{ marginRight: ".3rem", fontSize: ".7rem" }} />
-                  {opp.target}
-                </div>
-                <ul className="rlg-opp-benefits">
-                  {opp.benefits.map((benefit, i) => (
-                    <li key={i}><FontAwesomeIcon icon={faCheckCircle} /> {benefit}</li>
-                  ))}
-                </ul>
-                {opp.timeCommitment && (
-                  <div className="rlg-time-badge">
-                    <FontAwesomeIcon icon={faClock} /> {opp.timeCommitment}
+            <div className="gi-hero-stats">
+              {heroStats.map((s, i) => (
+                <div key={i} className="gi-hero-stat">
+                  <div className="num">
+                    {s.num}
+                    {s.plus && <span className="plus">{s.plus}</span>}
                   </div>
-                )}
-                <button 
-                  className="rlg-opp-btn"
-                  onClick={() => {
-                    setFormData({ ...formData, interest: opp.value });
-                    document.getElementById("interest-form")?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                >
-                  {opp.action} <FontAwesomeIcon icon={faArrowRight} />
-                </button>
-              </div>
-            ))}
+                  <div className="lbl">{s.label}</div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* REGISTRATION FORM */}
-      <section id="interest-form" className="rlg-form-section">
-        <div className="rlg-container">
-          <div className="fade-up-2">
-            <div className="rlg-label"><FontAwesomeIcon icon={faEnvelope} /> Registration Form</div>
-            <h2 className="rlg-section-title">Express Your Interest</h2>
-            <p className="rlg-section-sub" style={{ margin: "0 auto" }}>Fill out the form below. An RLG coordinator will contact you within 3–5 days.</p>
-          </div>
-          
-          <div className="rlg-form-card fade-up-3">
-            <form onSubmit={handleSubmit}>
-              <div className="rlg-form-group">
-                <label>Full Name *</label>
-                <input type="text" name="fullName" value={formData.fullName} onChange={handleChange} required />
-              </div>
-              
-              <div className="rlg-form-group">
-                <label>Email Address *</label>
-                <input type="email" name="email" value={formData.email} onChange={handleChange} required />
-              </div>
-              
-              <div className="rlg-form-group">
-                <label>Phone Number</label>
-                <input type="tel" name="phone" value={formData.phone} onChange={handleChange} />
-              </div>
-              
-              <div className="rlg-form-group">
-                <label>Organization/School (if applicable)</label>
-                <input type="text" name="organization" value={formData.organization} onChange={handleChange} />
-              </div>
-              
-              <div className="rlg-form-group">
-                <label>How would you like to help? *</label>
-                <div className="rlg-radio-group">
-                  {opportunities.map((opp) => (
-                    <label key={opp.id}>
-                      <input type="radio" name="interest" value={opp.value} checked={formData.interest === opp.value} onChange={handleChange} />
-                      {opp.title}
-                    </label>
+        {/* ============ MAIN INVOLVED SECTION ============ */}
+        <section className="gi-section">
+          <div className="gi-container">
+            <div className="gi-involved-grid">
+
+              {/* LEFT — interest cards + image */}
+              <div className="gi-involved-left">
+                <span className="gi-eyebrow"><span className="dot"></span> Ways to Join</span>
+                <h2>Choose how you want to make an impact.</h2>
+                <p>
+                  Pick the path that fits your skills and passion. Each option opens
+                  a different door — but they all lead to the same place: transforming
+                  young lives across Rwanda.
+                </p>
+
+                <div className="gi-interest-list">
+                  {interests.map((it) => (
+                    <button
+                      key={it.value}
+                      type="button"
+                      className={`gi-interest-card ${
+                        form.interest === it.value ? "active" : ""
+                      }`}
+                      onClick={() => selectInterest(it.value)}
+                    >
+                      <div className="gi-interest-icon">
+                        <svg viewBox="0 0 24 24">
+                          <path d={it.iconPath} />
+                        </svg>
+                      </div>
+                      <div className="gi-interest-content">
+                        <b>{it.label}</b>
+                        <span>{it.desc}</span>
+                      </div>
+                      <div className="gi-interest-check">
+                        <svg viewBox="0 0 24 24">
+                          <path d="M20 6L9 17l-5-5" />
+                        </svg>
+                      </div>
+                    </button>
                   ))}
                 </div>
-              </div>
-              
-              <div className="rlg-form-group">
-                <label>Your City/District</label>
-                <input type="text" name="district" value={formData.district} onChange={handleChange} placeholder="e.g., Kigali, Rubavu, Huye..." />
-              </div>
-              
-              <div className="rlg-form-group">
-                <label>Message (optional)</label>
-                <textarea name="message" rows="3" value={formData.message} onChange={handleChange} placeholder="Tell us more about how you'd like to contribute..."></textarea>
-              </div>
-              
-              <button type="submit" className="rlg-submit-btn" disabled={isSubmitting}>
-                {isSubmitting ? <><FontAwesomeIcon icon={faSpinner} spin /> Submitting...</> : "Submit Interest"}
-              </button>
-            </form>
-          </div>
-        </div>
-      </section>
 
-      {/* WHAT HAPPENS NEXT */}
-      <section className="rlg-steps">
-        <div className="rlg-container">
-          <div className="fade-up-1">
-            <div className="rlg-label"><FontAwesomeIcon icon={faCalendarAlt} /> What Happens Next?</div>
-            <h2 className="rlg-section-title">Your Journey With RLG</h2>
-          </div>
-          <div className="rlg-steps-grid">
-            <div className="rlg-step-card fade-up-2">
-              <div className="rlg-step-number">1</div>
-              <h3>We receive your form</h3>
-              <p>Your information is safely stored and reviewed by our team</p>
-            </div>
-            <div className="rlg-step-card fade-up-2">
-              <div className="rlg-step-number">2</div>
-              <h3>A Community Coordinator contacts you</h3>
-              <p>Within 3-5 days, we'll reach out via phone or email</p>
-            </div>
-            <div className="rlg-step-card fade-up-3">
-              <div className="rlg-step-number">3</div>
-              <h3>We match you with the right opportunity</h3>
-              <p>Based on your skills and interests</p>
-            </div>
-            <div className="rlg-step-card fade-up-3">
-              <div className="rlg-step-number">4</div>
-              <h3>You start making impact</h3>
-              <p>Begin your leadership journey with RLG</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ SECTION */}
-      <section className="rlg-faq">
-        <div className="rlg-container">
-          <div className="fade-up-1">
-            <div className="rlg-label"><FontAwesomeIcon icon={faComments} /> Frequently Asked Questions</div>
-            <h2 className="rlg-section-title">Got Questions?</h2>
-            <p className="rlg-section-sub" style={{ margin: "0 auto" }}>Find answers to common questions about getting involved</p>
-          </div>
-          <div className="rlg-faq-grid">
-            {faqs.map((faq, index) => (
-              <div key={index} className="rlg-faq-card fade-up-2" style={{ animationDelay: `${index * 0.1}s` }}>
-                <h3><FontAwesomeIcon icon={faHeart} style={{ color: "#22c55e" }} /> {faq.q}</h3>
-                <p>{faq.a}</p>
+                <div className="gi-involved-image">
+                     <img
+                   src={aboutImage}
+                   alt="Community outreach"
+                 />
+                  <div className="gi-involved-caption">
+                    <div className="title">RLG Club Members in Action</div>
+                    <div className="desc">
+                      Students leading change in their schools and communities.
+                    </div>
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* ALREADY INVOLVED CTA */}
-      <section className="rlg-cta-section">
-        <div className="rlg-container">
-          <h2>Already Involved?</h2>
-          <p>Share your RLG story and inspire others to join the movement!</p>
-          <Link to="/contact">
-            <button className="btn-outline-rlg">
-              <FontAwesomeIcon icon={faHeart} /> Send us a Testimonial
-            </button>
-          </Link>
-        </div>
-      </section>
-    </div>
+              {/* RIGHT — application form */}
+              <div className="gi-form-card">
+                <div className="gi-form-header">
+                  <h3>Application Form</h3>
+                  <p>
+                    Fill in your details and we'll get back to you within 2–3 business days.
+                  </p>
+                </div>
+
+                <form onSubmit={handleSubmit} noValidate>
+                  {form.interest && (
+                    <div className="gi-selected-badge">
+                      <svg viewBox="0 0 24 24">
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                      <span>
+                        <span className="label">Interest:</span> {form.interest}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="gi-form-field">
+                    <label htmlFor="fullName">
+                      Full Name <span className="required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="fullName"
+                      name="fullName"
+                      placeholder="Your full name"
+                      value={form.fullName}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="gi-form-row">
+                    <div className="gi-form-field">
+                      <label htmlFor="email">
+                        Email <span className="required">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="you@example.com"
+                        value={form.email}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    <div className="gi-form-field">
+                      <label htmlFor="phone">Phone</label>
+                      <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        placeholder="+250..."
+                        value={form.phone}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="gi-form-row">
+                    <div className="gi-form-field">
+                      <label htmlFor="organization">Organization / School</label>
+                      <input
+                        type="text"
+                        id="organization"
+                        name="organization"
+                        placeholder="Optional"
+                        value={form.organization}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    <div className="gi-form-field">
+                      <label htmlFor="district">District</label>
+                      <input
+                        type="text"
+                        id="district"
+                        name="district"
+                        placeholder="Your district"
+                        value={form.district}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="gi-form-field">
+                    <label htmlFor="interest">
+                      Area of Interest <span className="required">*</span>
+                    </label>
+                    <select
+                      id="interest"
+                      name="interest"
+                      value={form.interest}
+                      onChange={handleChange}
+                      required
+                    >
+                      <option value="">Select an option</option>
+                      {interests.map((it) => (
+                        <option key={it.value} value={it.value}>
+                          {it.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="gi-form-field">
+                    <label htmlFor="message">Message</label>
+                    <textarea
+                      id="message"
+                      name="message"
+                      placeholder="Tell us a bit about yourself..."
+                      value={form.message}
+                      onChange={handleChange}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="gi-submit-btn"
+                    disabled={submitting}
+                  >
+                    <svg viewBox="0 0 24 24">
+                      <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                    </svg>
+                    <span>
+                      {submitting ? "Submitting..." : "Submit Application"}
+                    </span>
+                  </button>
+
+                  <p className="gi-form-footnote">
+                    We respect your privacy. Your information is only used to respond to
+                    your inquiry.
+                  </p>
+                </form>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        {/* ============ PROCESS ============ */}
+        <section className="gi-section gi-section-gray">
+          <div className="gi-container">
+            <div className="gi-section-head center">
+              <span className="gi-eyebrow"><span className="dot"></span> What Happens Next</span>
+              <h2>Your journey from application to impact</h2>
+              <p>A simple, transparent process designed to get you involved quickly.</p>
+            </div>
+
+            <div className="gi-process-grid">
+              {processSteps.map((p, i) => (
+                <div key={i} className="gi-process-card">
+                  <span className="gi-process-num">{p.num}</span>
+                  <h3>{p.title}</h3>
+                  <p>{p.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ============ CTA GRID ============ */}
+        <section className="gi-section">
+          <div className="gi-container">
+            <div className="gi-cta-grid">
+
+              <div className="gi-cta-card gi-cta-donate">
+                <div className="gi-cta-icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
+                  </svg>
+                </div>
+                <h3>Prefer to donate instead?</h3>
+                <p>
+                  Your support funds clubs, debates, and bootcamps that transform
+                  young lives. Every dollar makes a difference.
+                </p>
+                <div className="gi-cta-actions">
+                  <Link to="/donate" className="gi-btn-white">
+                    Donate Now
+                    <svg viewBox="0 0 24 24">
+                      <path d="M5 12h14M13 6l6 6-6 6" />
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+
+              <div className="gi-cta-card gi-cta-contact">
+                <div className="gi-cta-icon">
+                  <svg viewBox="0 0 24 24">
+                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                    <path d="M22 6l-10 7L2 6" />
+                  </svg>
+                </div>
+                <h3>Have a question first?</h3>
+                <p>
+                  Not sure which path is right for you? Reach out to our team —
+                  we're happy to help you find the best way to get involved.
+                </p>
+                <div className="gi-cta-actions">
+                  <Link to="/contact" className="gi-btn-primary">
+                    Contact Us
+                    <svg viewBox="0 0 24 24">
+                      <path d="M5 12h14M13 6l6 6-6 6" />
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </>
   );
 }
