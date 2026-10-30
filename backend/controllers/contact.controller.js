@@ -1,5 +1,5 @@
 const Contact = require('../models/Contact.model');
-const { sendContactReply } = require('../utils/sendEmail');
+const { sendContactReply, sendEmail } = require('../utils/sendEmail');
 const { ApiResponse } = require('../utils/apiResponse');
 
 const submitContact = async (req, res) => {
@@ -9,6 +9,30 @@ const submitContact = async (req, res) => {
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'],
     });
+
+    // Notify RLG team via email
+    try {
+      await sendEmail({
+        email: process.env.EMAIL_USER || 'raisingleaderofgeneration@gmail.com',
+        subject: `New Contact Message: ${contact.subject}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #166534;">New Contact Message Received</h2>
+            <div style="background: #f0fdf4; padding: 15px; border-left: 4px solid #16a34a; margin: 15px 0;">
+              <p><strong>Name:</strong> ${contact.name}</p>
+              <p><strong>Email:</strong> ${contact.email}</p>
+              <p><strong>Phone:</strong> ${contact.phone || 'N/A'}</p>
+              <p><strong>Subject:</strong> ${contact.subject}</p>
+              <p><strong>Message:</strong><br/>${contact.message}</p>
+            </div>
+            <p>Reply to this visitor from the admin panel: <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/admin/contacts">RLG Admin</a></p>
+          </div>
+        `,
+      });
+    } catch (emailError) {
+      console.log('Contact notification email failed:', emailError.message);
+    }
+
     return ApiResponse.created(res, contact, 'Message sent successfully');
   } catch (error) {
     return ApiResponse.error(res, error.message);
