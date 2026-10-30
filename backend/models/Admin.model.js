@@ -22,7 +22,7 @@ const adminSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['admin', 'super_admin', 'moderator'],
+    enum: ['admin', 'super_admin', 'editor', 'moderator'],
     default: 'admin',
   },
   avatar: {
@@ -58,12 +58,8 @@ adminSchema.pre('save', async function(next) {
 
 // Compare password method
 adminSchema.methods.comparePassword = async function(candidatePassword) {
-  console.log('Comparing passwords...');
-  console.log('Candidate:', candidatePassword);
-  console.log('Stored hash:', this.password);
-  const result = await bcrypt.compare(candidatePassword, this.password);
-  console.log('Compare result:', result);
-  return result;
+  if (!this.password) return false;
+  return bcrypt.compare(candidatePassword, this.password);
 };
 
 module.exports = mongoose.model('Admin', adminSchema);
