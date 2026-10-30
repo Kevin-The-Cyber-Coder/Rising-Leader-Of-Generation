@@ -1,502 +1,880 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faSchool, faUsers, faTree, faMicrophone, faAward, faGavel,
-  faComments, faChartLine, faClipboardList, faTasks,
-  faHandshake, faLeaf, faCalendarAlt, faArrowRight, faStar,
-  faCheckCircle, faLightbulb, faRocket, faHeart, faTrophy,
-  faFlag, faGlobe, faUserGraduate, faChalkboardUser, faFire,
-  faSeedling, faHandsHelping, faMedal, faCrown, faBookOpen,
-  faLaptopCode, faBullhorn, faBuilding, faUserTie, faClock,
-  faEnvelope
-} from "@fortawesome/free-solid-svg-icons";
-import Swal from "sweetalert2";
-import { heroBg } from "../assets";
 
-/* ─── SweetAlert2 helpers ─────────────────────────────────────── */
-const showSuccess = (title, text) =>
-  Swal.fire({ icon: "success", title, text, confirmButtonColor: "#166534", timer: 3500, timerProgressBar: true });
-const showInfo = (title, text) =>
-  Swal.fire({ icon: "info", title, text, confirmButtonColor: "#166534" });
-const showToast = (message, icon = "success") =>
-  Swal.mixin({ toast: true, position: "top-end", showConfirmButton: false, timer: 3000, timerProgressBar: true })
-    .fire({ icon, title: message });
+// --- IMPORT LOCAL ASSETS ---
+import event1 from '../assets/event-1.jpg';
+import event2 from '../assets/event-2.jpg';
+import event3 from '../assets/event-3.jpg';
+import programIcon1 from '../assets/program-icon-1.png';
+import programIcon2 from '../assets/program-icon-2.png';
+import programIcon3 from '../assets/program-icon-3.png';
 
-/* ─── API Service ─────────────────────────────────────────────── */
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-const api = {
-  getPrograms: async () => {
-    try {
-      const response = await fetch(`${API_URL}/programs`);
-      const data = await response.json();
-      return data.data || [];
-    } catch (error) {
-      console.error("Error fetching programs:", error);
-      return [];
-    }
-  }
-};
-
-/* ─── Data ────────────────────────────────────────────────────── */
-const programCategories = [
+/* ---------- Fallback data (used if API fails) ---------- */
+const fallbackPrograms = [
   {
-    id: 1,
+    tag: "Leadership",
+    // Changed to use local icon (passed as a string to match your dangerouslySetInnerHTML structure)
+    // Note: If you want to use the image file directly, we would need to change the JSX render.
+    // For now, I am keeping the SVG structure but you can swap to <img> if preferred.
+    icon: `<svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>`,
     title: "School Leadership Development",
-    target: "Students in primary and secondary schools",
-    description: "Trainings and mentoring for students through student councils and leadership bootcamps.",
-    icon: faSchool,
-    color: "#22c55e",
+    description:
+      "Trainings and mentoring for students through student councils and leadership bootcamps.",
     subPrograms: [
-      { name: "RLG Clubs Coordinate", icon: faUsers, description: "In-school leadership clubs where students meet regularly to discuss leadership topics, plan activities, and practice decision-making." },
-      { name: "RLG Impact", icon: faHandsHelping, description: "Social action projects led by students — from community cleanups to fundraising for local causes. Students learn by doing." },
-      { name: "RLG Green Life", icon: faLeaf, description: "Environmental and sustainability leadership. Students learn to protect their communities while leading green initiatives." }
+      { name: "RLG Clubs", description: "School-based clubs coordinated by RLG" },
+      { name: "RLG Green Life", description: "Environment and sustainability projects" },
+      { name: "RLG Impact", description: "Community impact initiatives" },
     ],
-    howToJoin: "Ask your teacher or principal to contact RLG to start a club at your school.",
-    actionText: "Start an RLG Club",
-    actionLink: "/get-involved"
+    // Changed to local image
+    image: event1,
   },
   {
-    id: 2,
+    tag: "Competitions",
+    icon: `<svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>`,
     title: "Tournaments & Competitions",
-    target: "Interschool teams and individual youth (ages 13–25)",
-    description: "Debate, public speaking, interschool challenges, entrepreneurship and leadership awards.",
-    icon: faTrophy,
-    color: "#16a34a",
+    description:
+      "Debate, public speaking, interschool challenges, and leadership awards.",
     subPrograms: [
-      { name: "Light the Flame", icon: faFire, description: "Debate and public speaking competitions. Students develop confidence, critical thinking, and persuasive communication skills." },
-      { name: "Oasis of Wealth", icon: faAward, description: "Entrepreneurship and leadership awards. Young people pitch ideas, showcase business plans, and win recognition and small grants." }
+      { name: "Light the Flame", description: "Debate and public speaking competition" },
+      { name: "Oasis of Wealth", description: "Entrepreneurship and leadership awards" },
     ],
-    howToJoin: "Next Light the Flame tournament coming soon. Register your interest today!",
-    actionText: "Register for Next Tournament",
-    actionLink: "/contact"
+    // Changed to local image
+    image: event2,
   },
   {
-    id: 3,
+    tag: "Forums",
+    icon: `<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87"/></svg>`,
     title: "Leadership Forums & Conferences",
-    target: "Young leaders, university students, aspiring entrepreneurs",
-    description: "Summits and forums on governance, entrepreneurship, and networking platforms.",
-    icon: faComments,
-    color: "#15803d",
+    description:
+      "Summits and forums on governance, entrepreneurship, and networking platforms.",
     subPrograms: [
-      { name: "My Role", icon: faCrown, description: "Governance and personal responsibility forums. Young people learn how to take ownership of their communities and nation." },
-      { name: "Oasis of Wealth", icon: faChartLine, description: "Economic prosperity sessions — financial literacy, career planning, and wealth creation for youth." },
-      { name: "My Heritage", icon: faBookOpen, description: "Cultural and legacy discussions. Understanding where we come from to lead where we are going." }
+      { name: "My Role", description: "Personal responsibility and citizenship" },
+      { name: "My Heritage", description: "Culture, identity, and values" },
     ],
-    howToJoin: "Next Annual Youth Leadership Summit — Date TBA",
-    actionText: "Attend Next Summit",
-    actionLink: "/get-involved"
-  }
+    // Changed to local image
+    image: event3,
+  },
 ];
 
-const implementationPhases = [
-  { phase: "Planning", icon: faClipboardList, description: "Assessment, consultation, participatory planning with youth.", color: "#22c55e" },
-  { phase: "Execution", icon: faTasks, description: "Youth-led implementation supported by professional trainers and mentors.", color: "#16a34a" },
-  { phase: "Mentorship & Review", icon: faComments, description: "Regular reviews, impact assessments, and a continuous feedback loop.", color: "#15803d" },
-  { phase: "Sustainability", icon: faLeaf, description: "Building long-term partnerships and capacity development.", color: "#14532d" }
-];
-
-const programCalendar = [
-  { month: "February", activity: "Light the Flame – School qualifiers", icon: faFire },
-  { month: "April", activity: "RLG Green Life – Tree planting campaign", icon: faLeaf },
-  { month: "June", activity: "My Role Governance Forum", icon: faCrown },
-  { month: "September", activity: "Oasis of Wealth Awards", icon: faAward },
-  { month: "November", activity: "Annual Youth Leadership Summit", icon: faStar }
-];
-
-/* ─── Component ───────────────────────────────────────────────── */
 export default function Programs() {
-  const [hoveredProgram, setHoveredProgram] = useState(null);
-  const [backendPrograms, setBackendPrograms] = useState([]);
-  const [dataLoaded, setDataLoaded] = useState(false);
+  const [programs, setPrograms] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch programs from backend
   useEffect(() => {
-    const fetchData = async () => {
-      const programsData = await api.getPrograms();
-      if (programsData.length > 0) {
-        setBackendPrograms(programsData);
+    (async () => {
+      try {
+        const r = await fetch(`${API_URL}/programs`);
+        const d = await r.json();
+        const items =
+          d.data && d.data.length > 0
+            ? d.data.map((p, i) => ({
+                ...fallbackPrograms[i % fallbackPrograms.length],
+                ...p,
+              }))
+            : fallbackPrograms;
+        setPrograms(items);
+      } catch {
+        setPrograms(fallbackPrograms);
+      } finally {
+        setLoading(false);
       }
-      setDataLoaded(true);
-    };
-    fetchData();
+    })();
   }, []);
 
-  const handleJoinClick = (programName) => {
-    showSuccess("Registration Interest!", `Thank you for your interest in ${programName}. We'll contact you soon!`);
-  };
-
-  const handleSponsorClick = () => {
-    showInfo("Sponsor a Program", "Thank you for considering sponsorship. Our team will reach out to you shortly.");
-  };
-
-  const handleVolunteerClick = () => {
-    showToast("Volunteer applications are open! Visit Get Involved page to apply.", "success");
-  };
-
-  // Merge backend data with static categories (backend data overrides if available)
-  const getProgramDetails = (categoryTitle) => {
-    const backendProgram = backendPrograms.find(p => p.type === categoryTitle);
-    if (backendProgram && backendProgram.subPrograms && backendProgram.subPrograms.length > 0) {
-      return backendProgram;
-    }
-    return null;
-  };
-
   return (
-    <div className="rlg-programs-page pt-16">
+    <>
       <style>{`
-        .rlg-programs-page { font-family: 'Lato', 'Segoe UI', sans-serif; color: #1a1a1a; }
-        :root {
-          --green-900: #14532d;
-          --green-800: #166534;
-          --green-700: #15803d;
-          --green-600: #16a34a;
-          --green-500: #22c55e;
-          --green-400: #4ade80;
-          --green-100: #dcfce7;
-          --green-50:  #f0fdf4;
-          --shadow-sm: 0 2px 8px rgba(21,128,61,.10);
-          --shadow-md: 0 8px 30px rgba(21,128,61,.15);
-          --shadow-lg: 0 20px 60px rgba(21,128,61,.20);
-          --radius:    1rem;
-          --transition: .3s cubic-bezier(.4,0,.2,1);
+        /* ============================================================
+           PROGRAMS PAGE — matches HTML exactly
+           ============================================================ */
+        :root{
+          --navy:#152B3A;
+          --navy-deep:#0F212D;
+          --green:#2F6B4F;
+          --green-deep:#234F3B;
+          --green-light:#8FC1A3;
+          --green-bright:#3F8C63;
+          --gold:#F2C94C;
+          --gold-hover:#E0B63A;
+          --paper:#FAF8F4;
+          --paper-dim:#F1EDE3;
+          --line:#E4DFD3;
+          --text:#3A3F42;
+          --text-soft:#6B7178;
         }
 
-        @keyframes fadeUp { from { opacity:0; transform:translateY(30px) } to { opacity:1; transform:none } }
-        @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
-        @keyframes slideIn { from { transform:translateX(-30px); opacity:0 } to { transform:none; opacity:1 } }
-        
-        .fade-up { animation: fadeUp .7s both; }
-        .fade-up-1 { animation: fadeUp .7s .1s both; }
-        .fade-up-2 { animation: fadeUp .7s .2s both; }
-        .fade-up-3 { animation: fadeUp .7s .3s both; }
-        .slide-in { animation: slideIn .6s both; }
-
-        .rlg-container { max-width: 1200px; margin: 0 auto; padding: 0 1.25rem; }
-
-        /* Hero Section */
-        .rlg-hero {
-          position: relative; min-height: 50vh; display: flex; align-items: center;
-          background: linear-gradient(135deg, #0a2a1a 0%, #14532d 100%);
-          overflow: hidden;
+        .pg-page{
+          background:var(--paper);
+          color:var(--text);
+          font-family:'Inter', system-ui, -apple-system, sans-serif;
+          line-height:1.5;
         }
-        .rlg-hero::before {
-          content:''; position:absolute; inset:0;
-          background: url(${heroBg}) center/cover no-repeat;
-          opacity:.12;
-        }
-        .rlg-hero-content { position: relative; z-index: 2; padding: 5rem 0; text-align: center; }
-        .rlg-hero h1 { font-family:'Playfair Display',Georgia,serif; font-size:clamp(2.5rem,5vw,4rem); font-weight:800; color:#fff; margin-bottom:1rem; }
-        .rlg-hero p { color:rgba(255,255,255,.85); font-size:1.1rem; max-width:700px; margin:0 auto; line-height:1.7; }
 
-        /* Section Label */
-        .rlg-label {
-          display:inline-flex;align-items:center;gap:.5rem;
-          background:linear-gradient(135deg, #dcfce7, #f0fdf4);
-          color:#14532d;
-          padding:.5rem 1.25rem;
-          border-radius:999px;
-          font-size:.8rem;
+        .pg-page *{ box-sizing:border-box; }
+        .pg-page img{ max-width:100%; display:block; }
+
+        .pg-container{
+          max-width:1280px;
+          margin:0 auto;
+          padding:0 48px;
+        }
+
+        .pg-section{
+          padding:100px 0;
+          position:relative;
+        }
+
+        .pg-section-head{
+          max-width:640px;
+          margin-bottom:56px;
+        }
+        .pg-section-head.center{
+          margin-left:auto;
+          margin-right:auto;
+          text-align:center;
+        }
+        .pg-section-head h2{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-weight:600;
+          font-size:clamp(32px, 3.5vw, 44px);
+          line-height:1.15;
+          letter-spacing:-0.02em;
+          color:var(--navy);
+          margin-bottom:16px;
+        }
+        .pg-section-head p{
+          font-size:16px;
+          color:var(--text-soft);
+          line-height:1.7;
+        }
+
+        .pg-eyebrow{
+          display:inline-flex;
+          align-items:center;
+          gap:8px;
+          font-size:12.5px;
           font-weight:700;
-          letter-spacing:.05em;
+          letter-spacing:0.12em;
           text-transform:uppercase;
-          margin-bottom:1rem;
-          border:1px solid rgba(34,197,94,0.3);
+          color:var(--green);
+          margin-bottom:16px;
         }
-        .rlg-section-title { font-family:'Playfair Display',Georgia,serif; font-size:clamp(1.8rem,3vw,2.6rem); font-weight:800; color:#111; margin-bottom:.75rem; }
-        .rlg-section-sub { color:#6b7280; font-size:1rem; line-height:1.7; max-width:580px; }
+        .pg-eyebrow .dot{
+          width:6px;
+          height:6px;
+          border-radius:50%;
+          background:var(--gold);
+        }
 
-        /* Program Category Cards */
-        .rlg-programs-categories { padding: 5rem 0; background: #fff; }
-        .rlg-category-card {
-          background: #fff;
-          border-radius: var(--radius);
-          overflow: hidden;
-          margin-bottom: 3rem;
-          box-shadow: var(--shadow-sm);
-          transition: var(--transition);
-          border: 1px solid #e5e7eb;
+        /* ---------- Page Hero ---------- */
+        .pg-hero{
+          position:relative;
+          background:linear-gradient(135deg, var(--navy) 0%, var(--green-deep) 100%);
+          padding:140px 0 100px;
+          overflow:hidden;
+          color:#fff;
+          text-align:center;
         }
-        .rlg-category-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
-        .rlg-category-header {
-          padding: 2rem;
-          background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-          border-bottom: 1px solid #e5e7eb;
+        .pg-hero::before{
+          content:'';
+          position:absolute;
+          top:-40%; left:-10%;
+          width:70%; height:180%;
+          background:radial-gradient(ellipse, rgba(143,193,163,0.22), transparent 65%);
+          pointer-events:none;
         }
-        .rlg-category-icon {
-          width: 4rem; height: 4rem; background: linear-gradient(135deg, #22c55e, #16a34a);
-          border-radius: 1rem; display: flex; align-items: center; justify-content: center;
-          margin-bottom: 1rem;
+        .pg-hero::after{
+          content:'';
+          position:absolute;
+          bottom:-50%; right:-10%;
+          width:60%; height:160%;
+          background:radial-gradient(ellipse, rgba(242,201,76,0.12), transparent 65%);
+          pointer-events:none;
         }
-        .rlg-category-icon svg { color: #fff; font-size: 1.8rem; }
-        .rlg-category-header h2 { font-size: 1.5rem; font-weight: 800; color: #14532d; margin-bottom: .5rem; }
-        .rlg-category-target { display: inline-block; background: #fff; padding: .25rem .75rem; border-radius: 999px; font-size: .75rem; color: #22c55e; font-weight: 600; margin-top: .5rem; }
-        .rlg-category-body { padding: 2rem; }
+        .pg-hero-inner{
+          position:relative;
+          z-index:1;
+          max-width:760px;
+          margin:0 auto;
+          padding:0 24px;
+        }
+        .pg-hero .pg-eyebrow{
+          color:var(--green-light);
+          justify-content:center;
+        }
+        .pg-hero h1{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-weight:600;
+          font-size:clamp(38px, 5vw, 60px);
+          line-height:1.1;
+          letter-spacing:-0.02em;
+          color:#fff;
+          margin-bottom:20px;
+        }
+        .pg-hero h1 .accent{ color:var(--gold); }
+        .pg-hero p{
+          font-size:clamp(16px, 1.3vw, 19px);
+          line-height:1.65;
+          color:rgba(255,255,255,0.82);
+          max-width:600px;
+          margin:0 auto;
+        }
 
-        /* Sub-Programs Grid */
-        .rlg-subprograms-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 1.5rem;
-          margin: 1.5rem 0;
+        /* ---------- Intro ---------- */
+        .pg-intro{
+          background:var(--paper);
+          padding:80px 0 40px;
         }
-        @media (max-width: 900px) { .rlg-subprograms-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 600px) { .rlg-subprograms-grid { grid-template-columns: 1fr; } }
-        .rlg-subprogram-card {
-          background: var(--green-50);
-          border-radius: var(--radius);
-          padding: 1.5rem;
-          transition: var(--transition);
-          border: 1px solid #e5e7eb;
+        .pg-intro-grid{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:64px;
+          align-items:center;
         }
-        .rlg-subprogram-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-sm); border-color: #22c55e; }
-        .rlg-subprogram-icon {
-          width: 3rem; height: 3rem; background: linear-gradient(135deg, #22c55e, #16a34a);
-          border-radius: 0.75rem; display: flex; align-items: center; justify-content: center;
-          margin-bottom: 1rem;
+        .pg-intro-content h2{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-weight:600;
+          font-size:clamp(28px, 3vw, 38px);
+          line-height:1.18;
+          letter-spacing:-0.02em;
+          color:var(--navy);
+          margin-bottom:20px;
         }
-        .rlg-subprogram-icon svg { color: #fff; font-size: 1.2rem; }
-        .rlg-subprogram-card h3 { font-weight: 800; font-size: 1rem; color: #14532d; margin-bottom: .5rem; }
-        .rlg-subprogram-card p { color: #6b7280; font-size: .8rem; line-height: 1.5; }
+        .pg-intro-content p{
+          font-size:16px;
+          color:var(--text-soft);
+          line-height:1.75;
+          margin-bottom:24px;
+        }
+        .pg-intro-stats{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:24px;
+        }
+        .pg-intro-stat{
+          background:#fff;
+          border:1px solid var(--line);
+          border-radius:12px;
+          padding:28px 24px;
+          transition:transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .pg-intro-stat:hover{
+          transform:translateY(-4px);
+          box-shadow:0 16px 40px rgba(21,43,58,0.1);
+        }
+        .pg-intro-stat .icon{
+          width:48px; height:48px;
+          border-radius:10px;
+          background:linear-gradient(135deg, rgba(47,107,79,0.14), rgba(63,140,99,0.08));
+          display:flex; align-items:center; justify-content:center;
+          margin-bottom:16px;
+        }
+        .pg-intro-stat .icon svg{
+          width:22px; height:22px;
+          stroke:var(--green); fill:none;
+          stroke-width:1.8;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+        .pg-intro-stat .num{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:34px;
+          font-weight:700;
+          color:var(--navy);
+          line-height:1;
+          margin-bottom:6px;
+        }
+        .pg-intro-stat .num .plus{ color:var(--green); }
+        .pg-intro-stat .lbl{
+          font-size:13.5px;
+          color:var(--text-soft);
+          line-height:1.5;
+        }
 
-        .rlg-how-to-join {
-          background: var(--green-50);
-          padding: 1rem;
-          border-radius: var(--radius);
-          margin: 1rem 0;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          flex-wrap: wrap;
-          gap: 1rem;
+        /* ---------- Programs Grid ---------- */
+        .pg-programs{
+          background:linear-gradient(180deg, var(--paper) 0%, var(--paper-dim) 100%);
+          position:relative;
+          overflow:hidden;
         }
-        .rlg-how-to-join p { margin: 0; color: #14532d; font-weight: 500; }
-        .rlg-btn-sm {
-          background: linear-gradient(135deg, #22c55e, #16a34a);
-          color: #fff; padding: .6rem 1.2rem; border-radius: 999px;
-          font-weight: 600; font-size: .8rem; border: none; cursor: pointer;
-          transition: var(--transition);
+        .pg-programs::before{
+          content:'';
+          position:absolute;
+          top:-10%; right:-10%;
+          width:50%; height:70%;
+          background:radial-gradient(ellipse, rgba(143,193,163,0.25), transparent 70%);
+          pointer-events:none;
         }
-        .rlg-btn-sm:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(34,197,94,0.3); }
+        .pg-programs-grid{
+          display:grid;
+          grid-template-columns:repeat(3, 1fr);
+          gap:28px;
+          position:relative;
+          z-index:1;
+        }
+        .pg-program-card{
+          background:#fff;
+          border:1px solid var(--line);
+          border-radius:12px;
+          overflow:hidden;
+          transition:transform 0.25s ease, box-shadow 0.25s ease;
+          display:flex;
+          flex-direction:column;
+        }
+        .pg-program-card:hover{
+          transform:translateY(-6px);
+          box-shadow:0 24px 48px rgba(21,43,58,0.14);
+        }
+        .pg-program-card-img{
+          height:220px;
+          overflow:hidden;
+          position:relative;
+          background:linear-gradient(135deg, var(--navy), var(--green-deep));
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        }
+        .pg-program-card-img img{
+          width:100%; height:100%;
+          object-fit:cover;
+          transition:transform 0.5s ease;
+        }
+        .pg-program-card:hover .pg-program-card-img img{
+          transform:scale(1.06);
+        }
+        .pg-program-card-tag{
+          position:absolute;
+          top:16px; left:16px;
+          background:rgba(15,33,45,0.85);
+          backdrop-filter:blur(8px);
+          color:#fff;
+          font-size:11.5px;
+          font-weight:700;
+          letter-spacing:0.08em;
+          text-transform:uppercase;
+          padding:6px 12px;
+          border-radius:100px;
+          z-index:2;
+        }
+        .pg-program-card-body{
+          padding:28px 26px 30px;
+          flex:1;
+          display:flex;
+          flex-direction:column;
+        }
+        .pg-program-card-icon{
+          width:48px; height:48px;
+          border-radius:10px;
+          background:linear-gradient(135deg, rgba(47,107,79,0.12), rgba(63,140,99,0.08));
+          display:flex; align-items:center; justify-content:center;
+          margin-bottom:18px;
+        }
+        .pg-program-card-icon svg{
+          width:24px; height:24px;
+          stroke:var(--green); fill:none;
+          stroke-width:1.8;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+        .pg-program-card h3{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:20px;
+          font-weight:600;
+          color:var(--navy);
+          margin-bottom:10px;
+          line-height:1.3;
+        }
+        .pg-program-card > .pg-program-card-body > p{
+          font-size:14.5px;
+          color:var(--text-soft);
+          line-height:1.65;
+          margin-bottom:18px;
+        }
+        .pg-program-divider{
+          height:1px;
+          background:var(--line);
+          margin:0 0 18px;
+        }
+        .pg-subprograms-label{
+          font-size:11.5px;
+          font-weight:700;
+          letter-spacing:0.12em;
+          text-transform:uppercase;
+          color:var(--navy);
+          margin-bottom:12px;
+        }
+        .pg-subprograms-list{
+          list-style:none;
+          display:grid;
+          gap:10px;
+          margin-bottom:22px;
+          padding:0;
+        }
+        .pg-subprograms-list li{
+          display:flex;
+          gap:10px;
+          align-items:flex-start;
+          font-size:13.5px;
+          color:var(--text-soft);
+          line-height:1.55;
+        }
+        .pg-subprograms-list li svg{
+          width:15px; height:15px;
+          stroke:var(--green); fill:none;
+          stroke-width:2.4;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+          flex-shrink:0;
+          margin-top:3px;
+        }
+        .pg-subprograms-list li b{
+          color:var(--navy);
+          font-weight:600;
+        }
+        .pg-program-card-actions{
+          display:flex;
+          gap:10px;
+          flex-wrap:wrap;
+          margin-top:auto;
+        }
 
-        /* Implementation Framework */
-        .rlg-framework { background: var(--green-50); padding: 5rem 0; }
-        .rlg-framework-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 1.5rem;
-          margin-top: 2rem;
+        .pg-btn-primary-sm{
+          display:inline-flex;
+          align-items:center;
+          gap:8px;
+          background:var(--green);
+          color:#fff;
+          font-size:13.5px;
+          font-weight:700;
+          padding:11px 20px;
+          border-radius:6px;
+          border:none;
+          cursor:pointer;
+          text-decoration:none;
+          transition:background 0.2s ease, transform 0.15s ease;
+          font-family:'Inter', sans-serif;
         }
-        @media (max-width: 900px) { .rlg-framework-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 600px) { .rlg-framework-grid { grid-template-columns: 1fr; } }
-        .rlg-phase-card {
-          background: #fff;
-          border-radius: var(--radius);
-          padding: 1.5rem;
-          text-align: center;
-          transition: var(--transition);
-          border: 1px solid #e5e7eb;
+        .pg-btn-primary-sm:hover{
+          background:var(--green-bright);
+          transform:translateY(-1px);
         }
-        .rlg-phase-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: #22c55e; }
-        .rlg-phase-icon {
-          width: 3.5rem; height: 3.5rem; background: linear-gradient(135deg, #22c55e, #16a34a);
-          border-radius: 1rem; display: flex; align-items: center; justify-content: center;
-          margin: 0 auto 1rem;
-        }
-        .rlg-phase-icon svg { color: #fff; font-size: 1.2rem; }
-        .rlg-phase-card h3 { font-weight: 800; font-size: 1rem; color: #14532d; margin-bottom: .5rem; }
-        .rlg-phase-card p { color: #6b7280; font-size: .8rem; line-height: 1.5; }
+        .pg-btn-primary-sm svg{ width:14px; height:14px; }
 
-        /* Calendar Section */
-        .rlg-calendar { padding: 5rem 0; background: #fff; }
-        .rlg-calendar-grid {
-          display: grid;
-          grid-template-columns: repeat(5, 1fr);
-          gap: 1rem;
-          margin-top: 2rem;
+        .pg-btn-outline-sm{
+          display:inline-flex;
+          align-items:center;
+          gap:8px;
+          background:transparent;
+          color:var(--navy);
+          font-size:13.5px;
+          font-weight:600;
+          padding:11px 20px;
+          border-radius:6px;
+          border:1.5px solid var(--line);
+          cursor:pointer;
+          text-decoration:none;
+          transition:border-color 0.2s ease, color 0.2s ease;
+          font-family:'Inter', sans-serif;
         }
-        @media (max-width: 900px) { .rlg-calendar-grid { grid-template-columns: repeat(3, 1fr); } }
-        @media (max-width: 600px) { .rlg-calendar-grid { grid-template-columns: 1fr; } }
-        .rlg-calendar-card {
-          background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-          border-radius: var(--radius);
-          padding: 1rem;
-          text-align: center;
-          transition: var(--transition);
-          border: 1px solid #e5e7eb;
+        .pg-btn-outline-sm:hover{
+          border-color:var(--green);
+          color:var(--green);
         }
-        .rlg-calendar-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-sm); }
-        .rlg-calendar-month {
-          font-weight: 800;
-          font-size: 1rem;
-          color: #14532d;
-          margin-bottom: .5rem;
-          padding-bottom: .5rem;
-          border-bottom: 2px solid #22c55e;
-          display: inline-block;
-        }
-        .rlg-calendar-card p { color: #6b7280; font-size: .8rem; margin-top: .5rem; }
 
-        /* CTA Section */
-        .rlg-cta-section { background: linear-gradient(135deg, #0a2a1a, #14532d); padding: 4rem 0; text-align: center; }
-        .rlg-cta-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem; }
-        .btn-primary-rlg {
-          display: inline-flex; align-items: center; gap: .5rem;
-          background: linear-gradient(135deg, #22c55e, #16a34a);
-          color: #fff; padding: .8rem 1.8rem; border-radius: 999px;
-          font-weight: 700; border: none; cursor: pointer; transition: var(--transition);
-          text-decoration: none;
+        /* ---------- Approach ---------- */
+        .pg-approach{ background:var(--paper); }
+        .pg-approach-grid{
+          display:grid;
+          grid-template-columns:repeat(4, 1fr);
+          gap:24px;
         }
-        .btn-primary-rlg:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(34,197,94,0.4); }
-        .btn-outline-rlg {
-          display: inline-flex; align-items: center; gap: .5rem;
-          background: transparent; color: #fff; padding: .8rem 1.8rem;
-          border-radius: 999px; font-weight: 700; border: 2px solid rgba(255,255,255,0.5);
-          cursor: pointer; transition: var(--transition); text-decoration: none;
+        .pg-approach-item{
+          background:#fff;
+          border:1px solid var(--line);
+          border-radius:12px;
+          padding:32px 26px;
+          transition:transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
         }
-        .btn-outline-rlg:hover { background: rgba(255,255,255,0.1); border-color: #fff; transform: translateY(-2px); }
+        .pg-approach-item:hover{
+          transform:translateY(-4px);
+          box-shadow:0 20px 44px rgba(21,43,58,0.1);
+          border-color:var(--green-light);
+        }
+        .pg-approach-item .icon{
+          width:52px; height:52px;
+          border-radius:50%;
+          background:linear-gradient(135deg, var(--green) 0%, var(--green-deep) 100%);
+          display:flex; align-items:center; justify-content:center;
+          margin-bottom:20px;
+          box-shadow:0 6px 18px rgba(47,107,79,0.3);
+        }
+        .pg-approach-item .icon svg{
+          width:24px; height:24px;
+          stroke:#fff; fill:none;
+          stroke-width:1.8;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+        .pg-approach-item h4{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:18px;
+          font-weight:600;
+          color:var(--navy);
+          margin-bottom:10px;
+          line-height:1.3;
+        }
+        .pg-approach-item p{
+          font-size:14px;
+          color:var(--text-soft);
+          line-height:1.65;
+        }
 
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Lato:wght@400;700&display=swap');
+        /* ---------- CTA ---------- */
+        .pg-cta{
+          background:linear-gradient(135deg, var(--green) 0%, var(--green-deep) 100%);
+          position:relative;
+          overflow:hidden;
+          padding:80px 0;
+        }
+        .pg-cta::before{
+          content:'';
+          position:absolute;
+          top:-60%; right:-10%;
+          width:60%; height:220%;
+          background:radial-gradient(ellipse, rgba(242,201,76,0.15), transparent 65%);
+          pointer-events:none;
+        }
+        .pg-cta-inner{
+          position:relative;
+          z-index:1;
+          text-align:center;
+          max-width:720px;
+          margin:0 auto;
+        }
+        .pg-cta h2{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-weight:600;
+          font-size:clamp(30px, 3.5vw, 42px);
+          line-height:1.2;
+          letter-spacing:-0.02em;
+          color:#fff;
+          margin-bottom:18px;
+        }
+        .pg-cta p{
+          font-size:16.5px;
+          color:rgba(255,255,255,0.82);
+          line-height:1.7;
+          margin-bottom:36px;
+        }
+        .pg-cta-actions{
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          gap:16px;
+          flex-wrap:wrap;
+        }
+        .pg-btn-white{
+          display:inline-flex;
+          align-items:center;
+          gap:10px;
+          background:#fff;
+          color:var(--green-deep);
+          font-size:15.5px;
+          font-weight:700;
+          padding:16px 32px;
+          border-radius:6px;
+          border:none;
+          cursor:pointer;
+          text-decoration:none;
+          transition:transform 0.15s ease, box-shadow 0.2s ease;
+          box-shadow:0 8px 24px rgba(0,0,0,0.15);
+          font-family:'Inter', sans-serif;
+        }
+        .pg-btn-white:hover{
+          transform:translateY(-2px);
+          box-shadow:0 12px 32px rgba(0,0,0,0.22);
+        }
+        .pg-btn-outline-white{
+          display:inline-flex;
+          align-items:center;
+          gap:10px;
+          background:transparent;
+          color:#fff;
+          font-size:15.5px;
+          font-weight:600;
+          padding:16px 32px;
+          border-radius:6px;
+          border:1.5px solid rgba(255,255,255,0.4);
+          cursor:pointer;
+          text-decoration:none;
+          transition:background 0.2s ease, border-color 0.2s ease;
+          font-family:'Inter', sans-serif;
+        }
+        .pg-btn-outline-white:hover{
+          background:rgba(255,255,255,0.1);
+          border-color:rgba(255,255,255,0.7);
+        }
+
+        /* ---------- Responsive ---------- */
+        @media (max-width: 1024px){
+          .pg-container{ padding:0 32px; }
+          .pg-hero{ padding:110px 0 80px; }
+          .pg-intro-grid{ grid-template-columns:1fr; gap:48px; }
+          .pg-programs-grid{ grid-template-columns:repeat(2, 1fr); }
+          .pg-approach-grid{ grid-template-columns:repeat(2, 1fr); }
+        }
+        @media (max-width: 640px){
+          .pg-container{ padding:0 22px; }
+          .pg-section{ padding:72px 0; }
+          .pg-hero{ padding:90px 0 70px; }
+          .pg-intro-stats{ grid-template-columns:1fr; }
+          .pg-programs-grid{ grid-template-columns:1fr; }
+          .pg-approach-grid{ grid-template-columns:1fr; }
+          .pg-cta-actions{ flex-direction:column; }
+          .pg-btn-white, .pg-btn-outline-white{ width:100%; justify-content:center; }
+        }
+        @media (prefers-reduced-motion: reduce){
+          .pg-page *{ transition:none !important; animation:none !important; }
+        }
       `}</style>
 
-      {/* HERO SECTION */}
-      <section className="rlg-hero">
-        <div className="rlg-hero-content">
-          <div className="rlg-container">
-            <div className="fade-up">
-              <h1>Our Programs</h1>
-              <p>How We Build Leaders — RLG runs three major program areas, each designed to nurture visionary, action-oriented leaders.</p>
+      <div className="pg-page">
+
+        {/* ============ PAGE HERO ============ */}
+        <section className="pg-hero">
+          <div className="pg-hero-inner">
+            <span className="pg-eyebrow"><span className="dot"></span> What We Offer</span>
+            <h1>Our <span className="accent">Programs</span></h1>
+            <p>
+              Three powerful initiatives designed to develop the next generation of leaders,
+              strengthen communities, and create lasting change.
+            </p>
+          </div>
+        </section>
+
+        {/* ============ INTRO ============ */}
+        <section className="pg-section pg-intro">
+          <div className="pg-container">
+            <div className="pg-intro-grid">
+
+              <div className="pg-intro-content">
+                <span className="pg-eyebrow"><span className="dot"></span> Our Approach</span>
+                <h2>Programs that transform lives and communities.</h2>
+                <p>
+                  Every program we run is built on a simple belief: when young people are
+                  given the tools, mentorship, and platform they deserve, they don't just
+                  succeed — they lead.
+                </p>
+                <p>
+                  From school-based clubs to national competitions, our initiatives reach
+                  thousands of participants each year, creating pathways to opportunity
+                  and impact that ripple far beyond the individual.
+                </p>
+              </div>
+
+              <div className="pg-intro-stats">
+                <div className="pg-intro-stat">
+                  <div className="icon">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+                    </svg>
+                  </div>
+                  <div className="num">1,000<span className="plus">+</span></div>
+                  <div className="lbl">Students Reached Annually</div>
+                </div>
+
+                <div className="pg-intro-stat">
+                  <div className="icon">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                  </div>
+                  <div className="num">120<span className="plus">+</span></div>
+                  <div className="lbl">Partner Schools</div>
+                </div>
+
+                <div className="pg-intro-stat">
+                  <div className="icon">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                      <path d="M22 4L12 14.01l-3-3" />
+                    </svg>
+                  </div>
+                  <div className="num">15<span className="plus">+</span></div>
+                  <div className="lbl">Competitions Hosted</div>
+                </div>
+
+                <div className="pg-intro-stat">
+                  <div className="icon">
+                    <svg viewBox="0 0 24 24">
+                      <circle cx="12" cy="8" r="3.2" />
+                      <path d="M4 20c0-3.5 3.6-6 8-6s8 2.5 8 6" />
+                    </svg>
+                  </div>
+                  <div className="num">200<span className="plus">+</span></div>
+                  <div className="lbl">Trained Volunteers</div>
+                </div>
+              </div>
+
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* PROGRAM CATEGORIES */}
-      <section className="rlg-programs-categories">
-        <div className="rlg-container">
-          {programCategories.map((category, index) => {
-            const backendData = getProgramDetails(category.title);
-            const displaySubPrograms = (backendData && backendData.subPrograms && backendData.subPrograms.length > 0) 
-              ? backendData.subPrograms 
-              : category.subPrograms;
-            
-            return (
-              <div key={category.id} className={`rlg-category-card fade-up-${index % 3}`}>
-                <div className="rlg-category-header">
-                  <div className="rlg-category-icon">
-                    <FontAwesomeIcon icon={category.icon} />
+        {/* ============ PROGRAMS GRID ============ */}
+        <section className="pg-section pg-programs">
+          <div className="pg-container">
+            <div className="pg-section-head center">
+              <span className="pg-eyebrow"><span className="dot"></span> Three Pillars</span>
+              <h2>Programs that transform</h2>
+              <p>Hands-on learning, mentorship, and real responsibility for every participant.</p>
+            </div>
+
+            <div className="pg-programs-grid">
+              {programs.map((p, i) => (
+                <article key={i} className="pg-program-card">
+                  <div className="pg-program-card-img">
+                    {/* Using local images now */}
+                    <img src={p.image} alt={p.title} />
+                    <span className="pg-program-card-tag">{p.tag}</span>
                   </div>
-                  <h2>{category.title}</h2>
-                  <div className="rlg-category-target">
-                    <FontAwesomeIcon icon={faUserGraduate} style={{ marginRight: ".3rem", fontSize: ".7rem" }} />
-                    {category.target}
+                  <div className="pg-program-card-body">
+                    <div
+                      className="pg-program-card-icon"
+                      dangerouslySetInnerHTML={{ __html: p.icon }}
+                    />
+                    <h3>{p.title}</h3>
+                    <p>{p.description || p.longDescription}</p>
+
+                    <div className="pg-program-divider"></div>
+                    <div className="pg-subprograms-label">Sub-Programs</div>
+                    <ul className="pg-subprograms-list">
+                      {(p.subPrograms || []).map((s, j) => (
+                        <li key={j}>
+                          <svg viewBox="0 0 24 24">
+                            <path d="M20 6L9 17l-5-5" />
+                          </svg>
+                          <span>
+                            <b>{s.name}:</b> {s.description}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div className="pg-program-card-actions">
+                      <Link to="/getinvolved" className="pg-btn-primary-sm">
+                        Join Now
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M5 12h14M13 6l6 6-6 6" />
+                        </svg>
+                      </Link>
+                      <Link to="/contact" className="pg-btn-outline-sm">
+                        Learn More
+                      </Link>
+                    </div>
                   </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ============ APPROACH ============ */}
+        <section className="pg-section pg-approach">
+          <div className="pg-container">
+            <div className="pg-section-head center">
+              <span className="pg-eyebrow"><span className="dot"></span> How We Work</span>
+              <h2>A proven approach to youth leadership</h2>
+              <p>Four principles guide every program we design and every partnership we build.</p>
+            </div>
+
+            <div className="pg-approach-grid">
+              <div className="pg-approach-item">
+                <div className="icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
                 </div>
-                <div className="rlg-category-body">
-                  <p style={{ color: "#6b7280", marginBottom: "1rem", lineHeight: "1.7" }}>{category.description}</p>
-                  
-                  <h4 style={{ fontWeight: 700, color: "#14532d", marginBottom: "1rem", fontSize: "1.1rem" }}>
-                    <FontAwesomeIcon icon={faStar} style={{ color: "#22c55e", marginRight: ".5rem", fontSize: ".9rem" }} />
-                    Sub-Programs
-                  </h4>
-                  <div className="rlg-subprograms-grid">
-                    {displaySubPrograms.map((sub, idx) => (
-                      <div 
-                        key={idx} 
-                        className="rlg-subprogram-card"
-                        onMouseEnter={() => setHoveredProgram(`${category.id}-${idx}`)}
-                        onMouseLeave={() => setHoveredProgram(null)}
-                      >
-                        <div className="rlg-subprogram-icon">
-                          <FontAwesomeIcon icon={sub.icon || faStar} />
-                        </div>
-                        <h3>{sub.name}</h3>
-                        <p>{sub.description}</p>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className="rlg-how-to-join">
-                    <p><FontAwesomeIcon icon={faCheckCircle} style={{ color: "#22c55e", marginRight: ".5rem" }} />{category.howToJoin}</p>
-                    <button className="rlg-btn-sm" onClick={() => handleJoinClick(category.title)}>
-                      {category.actionText} <FontAwesomeIcon icon={faArrowRight} style={{ marginLeft: ".5rem" }} />
-                    </button>
-                  </div>
-                </div>
+                <h4>Excellence</h4>
+                <p>We hold high standards for our participants, our volunteers, and ourselves.</p>
               </div>
-            );
-          })}
-        </div>
-      </section>
 
-      {/* IMPLEMENTATION FRAMEWORK */}
-      <section className="rlg-framework">
-        <div className="rlg-container">
-          <div style={{ textAlign: "center" }}>
-            <div className="rlg-label"><FontAwesomeIcon icon={faTasks} /> How We Implement Everything</div>
-            <h2 className="rlg-section-title">Our Implementation Framework</h2>
-            <p className="rlg-section-sub" style={{ margin: "0 auto" }}>A structured approach ensuring effective program delivery and lasting impact</p>
-          </div>
-          <div className="rlg-framework-grid">
-            {implementationPhases.map((phase, i) => (
-              <div key={i} className="rlg-phase-card fade-up" style={{ animationDelay: `${i * 0.1}s` }}>
-                <div className="rlg-phase-icon">
-                  <FontAwesomeIcon icon={phase.icon} />
+              <div className="pg-approach-item">
+                <div className="icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8z" />
+                  </svg>
                 </div>
-                <h3>{phase.phase}</h3>
-                <p>{phase.description}</p>
+                <h4>Community</h4>
+                <p>We build networks of support that continue long after a program ends.</p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* PROGRAM CALENDAR */}
-      <section className="rlg-calendar">
-        <div className="rlg-container">
-          <div style={{ textAlign: "center" }}>
-            <div className="rlg-label"><FontAwesomeIcon icon={faCalendarAlt} /> Program Calendar</div>
-            <h2 className="rlg-section-title">Year-Round Leadership Activities</h2>
-            <p className="rlg-section-sub" style={{ margin: "0 auto" }}>Sample calendar of our annual programs and events</p>
-          </div>
-          <div className="rlg-calendar-grid">
-            {programCalendar.map((item, i) => (
-              <div key={i} className="rlg-calendar-card fade-up" style={{ animationDelay: `${i * 0.1}s` }}>
-                <div className="rlg-calendar-month">
-                  <FontAwesomeIcon icon={item.icon} style={{ marginRight: ".3rem", fontSize: ".8rem" }} />
-                  {item.month}
+              <div className="pg-approach-item">
+                <div className="icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                    <path d="M22 4L12 14.01l-3-3" />
+                  </svg>
                 </div>
-                <p>{item.activity}</p>
+                <h4>Integrity</h4>
+                <p>We operate transparently and remain accountable to the communities we serve.</p>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* CTA SECTION */}
-      <section className="rlg-cta-section">
-        <div className="rlg-container">
-          <h2 style={{ color: "#fff", fontSize: "1.8rem", marginBottom: "1rem" }}>Ready to Get Involved?</h2>
-          <p style={{ color: "rgba(255,255,255,.8)", maxWidth: "600px", margin: "0 auto" }}>
-            Whether you want to participate, volunteer, or sponsor a program, there's a place for you at RLG.
-          </p>
-          <div className="rlg-cta-buttons">
-            <button className="btn-primary-rlg" onClick={handleVolunteerClick}>
-              <FontAwesomeIcon icon={faHandsHelping} /> Volunteer as a Trainer
-            </button>
-            <button className="btn-outline-rlg" onClick={handleSponsorClick}>
-              <FontAwesomeIcon icon={faHeart} /> Sponsor a Program
-            </button>
-            <Link to="/contact">
-              <button className="btn-outline-rlg">
-                <FontAwesomeIcon icon={faEnvelope} /> Contact Us
-              </button>
-            </Link>
+              <div className="pg-approach-item">
+                <div className="icon">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                  </svg>
+                </div>
+                <h4>Impact</h4>
+                <p>We measure success by the lasting difference we make in people's lives.</p>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
-    </div>
+        </section>
+
+        {/* ============ CTA ============ */}
+        <section className="pg-cta">
+          <div className="pg-container">
+            <div className="pg-cta-inner">
+              <h2>Support a young leader today</h2>
+              <p>
+                Your involvement helps fund clubs, debates, and bootcamps that change lives.
+                Every contribution, every hour volunteered, moves us forward.
+              </p>
+              <div className="pg-cta-actions">
+                <Link to="/getinvolved" className="pg-btn-white">
+                  Get Involved
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                </Link>
+                <Link to="/contact" className="pg-btn-outline-white">
+                  Contact Us
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </>
   );
 }
