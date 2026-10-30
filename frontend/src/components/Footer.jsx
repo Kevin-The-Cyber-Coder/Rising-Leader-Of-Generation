@@ -1,624 +1,281 @@
 import { Link } from "react-router-dom";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faFacebook, 
-  faTwitter, 
-  faInstagram, 
-  faLinkedin,
-  faYoutube
-} from '@fortawesome/free-brands-svg-icons';
-import { 
-  faMapMarkerAlt, 
-  faEnvelope, 
-  faPhone, 
-  faPaperPlane,
-  faHeart,
-  faArrowRight,
-  faClock,
-  faShieldAlt,
-  faCertificate,
-  faArrowUp
-} from '@fortawesome/free-solid-svg-icons';
-import { logo } from "../assets";
-import { showSuccess, showToast } from "../utils/alert";
-import { useState, useEffect } from "react";
+import logo from '../assets/logo.png';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-  const [showScrollTop, setShowScrollTop] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 300);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleNewsletterSubscribe = (e) => {
-    e.preventDefault();
-    const email = e.target.querySelector('input[type="email"]').value;
-    if (email) {
-      showSuccess("Subscribed! 🎉", `Thank you for subscribing with ${email}. You'll receive updates about leadership programs!`);
-      e.target.reset();
-    } else {
-      showToast("Please enter your email address", "error");
-    }
-  };
-
-  const quickLinks = [
-    { to: "/about", label: "About Us" },
-    { to: "/programs", label: "Programs" },
-    { to: "/blog", label: "Blog" },
-    { to: "/gallery", label: "Gallery" },
-    { to: "/contact", label: "Contact" }
-  ];
-
-  const getInvolvedLinks = [
-    { to: "/getinvolved", label: "Volunteer" },
-    { to: "/getinvolved", label: "Become a Mentor" },
-    { to: "/donate", label: "Donate" },
-    { to: "/programs", label: "Join a Program" }
-  ];
-
-  const resourcesLinks = [
-    { to: "/faq", label: "FAQs" },
-    { to: "/resources", label: "Resources" },
-    { to: "/testimonials", label: "Testimonials" },
-    { to: "/press", label: "Press Kit" }
-  ];
-
-  const socialLinks = [
-    { icon: faFacebook, href: "https://facebook.com", label: "Facebook", color: "#1877f2" },
-    { icon: faTwitter, href: "https://twitter.com", label: "Twitter", color: "#1da1f2" },
-    { icon: faInstagram, href: "https://instagram.com", label: "Instagram", color: "#e4405f" },
-    { icon: faLinkedin, href: "https://linkedin.com", label: "LinkedIn", color: "#0077b5" },
-    { icon: faYoutube, href: "https://youtube.com", label: "YouTube", color: "#ff0000" }
-  ];
 
   return (
     <>
-      <footer className="rlg-footer">
-        {/* Top Border */}
-        <div className="footer-top-border"></div>
-
-        {/* Main Footer */}
-        <div className="footer-main">
-          <div className="footer-grid">
-            
-            {/* Brand Section */}
-            <div className="footer-brand">
-              <Link to="/" className="footer-logo">
-                <img src={logo} alt="RLG Logo" />
-                <div className="footer-logo-text">
-                  <span>Raising Leaders</span>
-                  <span>of Generation</span>
-                </div>
-              </Link>
-              <p className="footer-description">
-                Empowering the next generation of leaders to create meaningful change in their communities and beyond.
-              </p>
-              
-              <div className="footer-badges">
-                <span className="footer-badge">
-                  <FontAwesomeIcon icon={faCertificate} />
-                  Certified
-                </span>
-                <span className="footer-badge">
-                  <FontAwesomeIcon icon={faShieldAlt} />
-                  Trusted
-                </span>
-              </div>
-              
-              <div className="footer-social">
-                {socialLinks.map((social, index) => (
-                  <a
-                    key={index}
-                    href={social.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="footer-social-icon"
-                    aria-label={social.label}
-                  >
-                    <FontAwesomeIcon icon={social.icon} />
-                  </a>
-                ))}
-              </div>
-            </div>
-            
-            {/* Quick Links */}
-            <div className="footer-links-section">
-              <h4>Quick Links</h4>
-              <ul>
-                {quickLinks.map((link, index) => (
-                  <li key={index}>
-                    <Link to={link.to}>{link.label}</Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            
-            {/* Get Involved */}
-            <div className="footer-links-section">
-              <h4>Get Involved</h4>
-              <ul>
-                {getInvolvedLinks.map((link, index) => (
-                  <li key={index}>
-                    <Link to={link.to}>{link.label}</Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            
-            {/* Resources */}
-            <div className="footer-links-section">
-              <h4>Resources</h4>
-              <ul>
-                {resourcesLinks.map((link, index) => (
-                  <li key={index}>
-                    <Link to={link.to}>{link.label}</Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            
-            {/* Contact & Newsletter */}
-            <div className="footer-contact-section">
-              <h4>Connect With Us</h4>
-              <div className="footer-contact-info">
-                <p><FontAwesomeIcon icon={faMapMarkerAlt} /> KG 123 St, Kigali, Rwanda</p>
-                <p><FontAwesomeIcon icon={faEnvelope} /> <a href="mailto:contact@rlg.org">contact@rlg.org</a></p>
-                <p><FontAwesomeIcon icon={faPhone} /> <a href="tel:+250788123456">+250 788 123 456</a></p>
-                <p><FontAwesomeIcon icon={faClock} /> Mon-Fri: 9:00 AM - 6:00 PM</p>
-              </div>
-              
-              <div className="footer-newsletter">
-                <p><FontAwesomeIcon icon={faPaperPlane} /> Subscribe to our newsletter</p>
-                <form onSubmit={handleNewsletterSubscribe}>
-                  <input type="email" placeholder="Your email address" required />
-                  <button type="submit">
-                    <FontAwesomeIcon icon={faArrowRight} />
-                  </button>
-                </form>
-                <small>No spam, unsubscribe anytime.</small>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Bottom Bar */}
-        <div className="footer-bottom">
-          <div className="footer-bottom-content">
-            <p>&copy; {currentYear} Rising Leaders of Generation. All rights reserved.</p>
-            <div className="footer-bottom-love">
-              <FontAwesomeIcon icon={faHeart} className="footer-heart" />
-              <span>Made with passion for young leaders in Rwanda</span>
-            </div>
-            <div className="footer-bottom-links">
-              <a href="#">Privacy Policy</a>
-              <a href="#">Terms of Service</a>
-              <a href="#">Cookie Policy</a>
-            </div>
-          </div>
-        </div>
-      </footer>
-
-      {/* Scroll to Top */}
-      {showScrollTop && (
-        <button className="scroll-top-btn" onClick={scrollToTop}>
-          <FontAwesomeIcon icon={faArrowUp} />
-        </button>
-      )}
-
       <style>{`
-        /* ========================================
-           FOOTER STYLES
-        ======================================== */
-        .rlg-footer {
-          background: linear-gradient(135deg, #0a1a3a 0%, #06122a 100%);
-          color: #ffffff;
-          position: relative;
-          margin-top: auto;
-          width: 100%;
+        /* ---------- Footer (matches HTML) ---------- */
+        .footer {
+          background: #0F212D;
+          color: rgba(255, 255, 255, 0.7);
+          padding: 72px 0 32px;
+          font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          line-height: 1.5;
         }
 
-        /* Top Border */
-        .footer-top-border {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 3px;
-          background: linear-gradient(90deg, #22c55e, #16a34a, #22c55e);
-        }
+        .footer * { box-sizing: border-box; }
 
-        /* Main Footer */
-        .footer-main {
+        .footer .container {
           max-width: 1280px;
           margin: 0 auto;
-          padding: 3rem 2rem;
+          padding: 0 48px;
         }
 
-        /* Footer Grid */
         .footer-grid {
           display: grid;
-          grid-template-columns: repeat(5, 1fr);
-          gap: 2rem;
+          grid-template-columns: 1.6fr 1fr 1fr 1fr;
+          gap: 48px;
+          padding-bottom: 48px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          margin-bottom: 32px;
         }
 
-        /* Responsive Grid */
-        @media (max-width: 1024px) {
-          .footer-grid {
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2rem;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .footer-main {
-            padding: 2rem 1.5rem;
-          }
-          .footer-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.5rem;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .footer-main {
-            padding: 2rem 1rem;
-          }
-          .footer-grid {
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
-          }
-        }
-
-        /* Brand Section */
-        .footer-brand {
-          grid-column: span 1;
-        }
-
-        @media (max-width: 1024px) {
-          .footer-brand {
-            grid-column: span 1;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .footer-brand {
-            grid-column: span 2;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .footer-brand {
-            grid-column: span 1;
-          }
-        }
-
-        /* Logo */
-        .footer-logo {
+        /* ---------- Brand ---------- */
+        .footer-brand .nav-logo {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 10px;
+          font-family: 'Source Serif 4', serif;
+          font-size: 19px;
+          font-weight: 600;
+          color: #FFFFFF;
           text-decoration: none;
-          margin-bottom: 1rem;
+          margin-bottom: 18px;
         }
 
-        .footer-logo img {
-          width: 50px;
-          height: 50px;
-          object-fit: contain;
-        }
-
-        .footer-logo-text {
-          display: flex;
-          flex-direction: column;
-        }
-
-        .footer-logo-text span:first-child {
-          font-size: 1.1rem;
-          font-weight: 800;
-          background: linear-gradient(135deg, #22c55e, #16a34a);
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-        }
-
-        .footer-logo-text span:last-child {
-          font-size: 0.7rem;
-          color: #9ca3af;
-          margin-top: -2px;
-        }
-
-        /* Description */
-        .footer-description {
-          color: #d1d5db;
-          font-size: 0.85rem;
-          line-height: 1.6;
-          margin-bottom: 1rem;
-        }
-
-        /* Badges */
-        .footer-badges {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.5rem;
-          margin-bottom: 1.5rem;
-        }
-
-        .footer-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.3rem;
-          background: rgba(255,255,255,0.05);
-          padding: 0.25rem 0.75rem;
-          border-radius: 999px;
-          font-size: 0.7rem;
-          color: #d1d5db;
-        }
-
-        .footer-badge svg {
-          color: #22c55e;
-          font-size: 0.7rem;
-        }
-
-        /* Social Icons */
-        .footer-social {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.75rem;
-        }
-
-        .footer-social-icon {
-          width: 36px;
-          height: 36px;
-          background: rgba(255,255,255,0.05);
+        .footer-brand .nav-logo .logo-icon {
+          width: 38px;
+          height: 38px;
           border-radius: 50%;
+          border: 1.5px solid #8FC1A3;
+          background: rgba(63, 140, 99, 0.2);
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.3s ease;
-          color: #d1d5db;
+          flex-shrink: 0;
+          overflow: hidden;
         }
 
-        .footer-social-icon:hover {
-          transform: translateY(-3px);
-          background: #22c55e;
-          color: white;
+        .footer-brand .nav-logo .logo-icon img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 50%;
         }
 
-        /* Links Sections */
-        .footer-links-section h4,
-        .footer-contact-section h4 {
-          font-size: 1rem;
+        .footer-brand p {
+          font-size: 14px;
+          line-height: 1.7;
+          color: rgba(255, 255, 255, 0.6);
+          max-width: 320px;
+          margin-bottom: 22px;
+        }
+
+        /* ---------- Social ---------- */
+        .footer-social {
+          display: flex;
+          gap: 10px;
+        }
+
+        .footer-social a {
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background 0.2s ease, border-color 0.2s ease;
+          color: inherit;
+        }
+
+        .footer-social a:hover {
+          background: #2F6B4F;
+          border-color: #2F6B4F;
+        }
+
+        .footer-social svg {
+          width: 16px;
+          height: 16px;
+          fill: rgba(255, 255, 255, 0.85);
+        }
+
+        /* ---------- Columns ---------- */
+        .footer-col h4 {
+          font-size: 13px;
           font-weight: 700;
-          margin-bottom: 1.2rem;
-          position: relative;
-          display: inline-block;
-          padding-bottom: 0.5rem;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: #FFFFFF;
+          margin-bottom: 20px;
+          font-family: 'Inter', sans-serif;
         }
 
-        .footer-links-section h4::after,
-        .footer-contact-section h4::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 35px;
-          height: 2px;
-          background: #22c55e;
-          border-radius: 2px;
-        }
-
-        .footer-links-section ul {
+        .footer-col ul {
           list-style: none;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
           padding: 0;
           margin: 0;
         }
 
-        .footer-links-section li {
-          margin-bottom: 0.6rem;
-        }
-
-        .footer-links-section a {
-          color: #d1d5db;
-          text-decoration: none;
-          font-size: 0.85rem;
-          transition: all 0.3s ease;
-        }
-
-        .footer-links-section a:hover {
-          color: #22c55e;
-          padding-left: 5px;
-        }
-
-        /* Contact Section */
-        .footer-contact-info p {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          color: #d1d5db;
-          font-size: 0.85rem;
-          margin-bottom: 0.75rem;
-        }
-
-        .footer-contact-info svg {
-          color: #22c55e;
-          width: 18px;
-        }
-
-        .footer-contact-info a {
-          color: #d1d5db;
+        .footer-col a {
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.65);
+          transition: color 0.2s ease;
           text-decoration: none;
         }
 
-        .footer-contact-info a:hover {
-          color: #22c55e;
+        .footer-col a:hover {
+          color: #F2C94C;
         }
 
-        /* Newsletter */
-        .footer-newsletter {
-          margin-top: 1.5rem;
-        }
-
-        .footer-newsletter p {
-          font-size: 0.85rem;
-          color: #d1d5db;
-          margin-bottom: 0.75rem;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .footer-newsletter p svg {
-          color: #22c55e;
-        }
-
-        .footer-newsletter form {
-          display: flex;
-          margin-bottom: 0.5rem;
-        }
-
-        .footer-newsletter input {
-          flex: 1;
-          padding: 0.6rem 1rem;
-          border: 1px solid rgba(255,255,255,0.1);
-          background: rgba(255,255,255,0.05);
-          border-radius: 8px 0 0 8px;
-          color: white;
-          font-size: 0.85rem;
-          outline: none;
-        }
-
-        .footer-newsletter input:focus {
-          border-color: #22c55e;
-        }
-
-        .footer-newsletter input::placeholder {
-          color: #9ca3af;
-        }
-
-        .footer-newsletter button {
-          padding: 0.6rem 1rem;
-          background: #22c55e;
-          border: none;
-          border-radius: 0 8px 8px 0;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-
-        .footer-newsletter button:hover {
-          background: #16a34a;
-        }
-
-        .footer-newsletter button svg {
-          color: white;
-        }
-
-        .footer-newsletter small {
-          font-size: 0.65rem;
-          color: #9ca3af;
-        }
-
-        /* Bottom Bar */
+        /* ---------- Bottom ---------- */
         .footer-bottom {
-          border-top: 1px solid rgba(255,255,255,0.05);
-          padding: 1.5rem 2rem;
-        }
-
-        .footer-bottom-content {
-          max-width: 1280px;
-          margin: 0 auto;
           display: flex;
           justify-content: space-between;
           align-items: center;
+          font-size: 13px;
+          color: rgba(255, 255, 255, 0.45);
           flex-wrap: wrap;
-          gap: 1rem;
+          gap: 12px;
         }
 
-        @media (max-width: 768px) {
-          .footer-bottom-content {
+        .footer-bottom a {
+          color: rgba(255, 255, 255, 0.6);
+          text-decoration: none;
+          transition: color 0.2s ease;
+        }
+
+        .footer-bottom a:hover {
+          color: #FFFFFF;
+        }
+
+        /* ---------- Responsive ---------- */
+        @media (max-width: 1024px) {
+          .footer .container { padding: 0 32px; }
+          .footer-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .footer .container { padding: 0 22px; }
+          .footer-grid {
+            grid-template-columns: 1fr;
+            gap: 36px;
+          }
+          .footer-bottom {
             flex-direction: column;
             text-align: center;
           }
         }
 
-        .footer-bottom-content p {
-          color: #9ca3af;
-          font-size: 0.8rem;
-        }
-
-        .footer-bottom-love {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          color: #9ca3af;
-          font-size: 0.8rem;
-        }
-
-        .footer-heart {
-          color: #ef4444;
-          animation: pulse 1.5s ease infinite;
-        }
-
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.1); }
-        }
-
-        .footer-bottom-links {
-          display: flex;
-          gap: 1.5rem;
-          flex-wrap: wrap;
-        }
-
-        .footer-bottom-links a {
-          color: #9ca3af;
-          text-decoration: none;
-          font-size: 0.8rem;
-          transition: color 0.3s ease;
-        }
-
-        .footer-bottom-links a:hover {
-          color: #22c55e;
-        }
-
-        /* Scroll to Top Button */
-        .scroll-top-btn {
-          position: fixed;
-          bottom: 30px;
-          right: 30px;
-          width: 45px;
-          height: 45px;
-          background: #22c55e;
-          border: none;
-          border-radius: 50%;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.3s ease;
-          z-index: 1000;
-          box-shadow: 0 4px 15px rgba(34,197,94,0.3);
-        }
-
-        .scroll-top-btn:hover {
-          background: #16a34a;
-          transform: translateY(-3px);
-          box-shadow: 0 6px 20px rgba(34,197,94,0.4);
-        }
-
-        .scroll-top-btn svg {
-          color: white;
-          font-size: 1.2rem;
+        @media (prefers-reduced-motion: reduce) {
+          .footer * { transition: none !important; }
         }
       `}</style>
+
+      <footer className="footer">
+        <div className="container">
+          <div className="footer-grid">
+
+            {/* ---------- Brand Column ---------- */}
+            <div className="footer-brand">
+              <Link to="/" className="nav-logo">
+                <span className="logo-icon">
+                  <img src={logo} alt="Raising Leaders Of Generation logo" />
+                </span>
+                Raising Leaders Of Generation
+              </Link>
+              <p>
+                A global community of volunteers and changemakers working toward a
+                more just, equitable, and compassionate world.
+              </p>
+              <div className="footer-social">
+                <a href="#" aria-label="Twitter">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z" />
+                  </svg>
+                </a>
+                <a href="#" aria-label="Facebook">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z" />
+                  </svg>
+                </a>
+                <a href="#" aria-label="Instagram">
+                  <svg viewBox="0 0 24 24">
+                    <rect x="2" y="2" width="20" height="20" rx="5" />
+                    <path
+                      d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37zM17.5 6.5h.01"
+                      stroke="white"
+                      strokeWidth="1.5"
+                      fill="none"
+                    />
+                  </svg>
+                </a>
+                <a href="#" aria-label="LinkedIn">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-4 0v7h-4v-7a6 6 0 016-6zM2 9h4v12H2zM4 2a2 2 0 100 4 2 2 0 000-4z" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            {/* ---------- Organization Column ---------- */}
+            <div className="footer-col">
+              <h4>Organization</h4>
+              <ul>
+                <li><Link to="/about">About Us</Link></li>
+                <li><Link to="/about">Our Team</Link></li>
+                <li><Link to="/about">Careers</Link></li>
+                <li><Link to="/about">Annual Report</Link></li>
+              </ul>
+            </div>
+
+            {/* ---------- Programs Column ---------- */}
+            <div className="footer-col">
+              <h4>Programs</h4>
+              <ul>
+                <li><Link to="/programs">School Leadership Development</Link></li>
+                <li><Link to="/programs">Tournaments & Competitions</Link></li>
+                <li><Link to="/programs">Leadership Forums & Conferences</Link></li>
+                <li><Link to="/programs">RLG Green Life</Link></li>
+              </ul>
+            </div>
+
+            {/* ---------- Get Involved Column ---------- */}
+            <div className="footer-col">
+              <h4>Get Involved</h4>
+              <ul>
+                <li><Link to="/getinvolved">Volunteer</Link></li>
+                <li><Link to="/donate">Donate</Link></li>
+                <li><Link to="/contact">Partner With Us</Link></li>
+                <li><Link to="/contact">Contact</Link></li>
+              </ul>
+            </div>
+
+          </div>
+
+          {/* ---------- Bottom Bar ---------- */}
+          <div className="footer-bottom">
+            <span>
+              Powered By <a href="http://wa.me/250799408845">CYBER CODING ARENA</a>
+              &nbsp;&copy; {currentYear} . All rights reserved.
+            </span>
+            <span>
+              <a href="#">Privacy Policy</a> &nbsp;&middot;&nbsp;
+              <a href="#">Terms of Service</a>
+            </span>
+          </div>
+        </div>
+      </footer>
     </>
   );
 };
