@@ -1,236 +1,809 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faSearch, faEnvelope, faArrowRight, faCalendarAlt,
-  faUser, faTag, faEye, faHeart, faClock,
-  faNewspaper, faSpinner, faBell, faRss,
-  faBookOpen, faLightbulb, faUsers, faCalendarWeek,
-  faHandshake, faQuoteLeft, faBlog
-} from "@fortawesome/free-solid-svg-icons";
-import Swal from "sweetalert2";
-import { heroBg } from "../assets";
-import api from "../services/api";
+import { Link, useParams } from "react-router-dom";
 
-const Blog = () => {
+// --- IMPORT LOCAL ASSETS ---
+import event1 from '../assets/event-1.jpg';
+import event2 from '../assets/event-2.jpg';
+import event3 from '../assets/event-3.jpg';
+import heroBg from '../assets/hero-bg.jpg';
+import heroImage from '../assets/hero-image.png';
+import hero from '../assets/hero.png';
+import programIcon1 from '../assets/program-icon-1.png';
+import programIcon2 from '../assets/program-icon-2.png';
+import programIcon3 from '../assets/program-icon-3.png';
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+/* ---------- Fallback posts (used if API fails) ---------- */
+const fallbackPosts = [
+  {
+    _id: "f1",
+    slug: "five-habits-good-leaders",
+    category: "Leadership Tips",
+    title: "Five Habits That Separate Good Leaders From Great Ones",
+    excerpt:
+      "Great leadership isn't about charisma or title — it's about consistent, small daily choices. Here are five habits our mentors teach every cohort, and why they compound into extraordinary impact over time.",
+    author: { name: "Editorial Team" },
+    publishedAt: "2026-03-12",
+    // Changed to local image
+    image: event1,
+    featured: true,
+  },
+  {
+    _id: "f2",
+    slug: "regional-debate-championship",
+    category: "Events",
+    title: "Regional Debate Championship Draws Record 40 Schools",
+    excerpt:
+      "Our annual Light the Flame debate competition brought together over 400 students from across the region for three days of fierce, respectful, and inspiring public speaking.",
+    author: { name: "RLG Team" },
+    publishedAt: "2026-03-04",
+    // Changed to local image
+    image: event2,
+  },
+  {
+    _id: "f3",
+    slug: "from-shy-student-to-president",
+    category: "Student Stories",
+    title: "From Shy Student to Student Council President",
+    excerpt:
+      "Two years ago, Amina couldn't speak in front of her class. Today, she leads a council of 30 students. This is her story — and what she wants every young person to know.",
+    author: { name: "Amara Okafor" },
+    publishedAt: "2026-02-26",
+    // Changed to local image
+    image: event3,
+  },
+  {
+    _id: "f4",
+    slug: "new-partnership-12-schools",
+    category: "Partnerships",
+    title: "New Partnership Expands Our Reach to 12 More Schools",
+    excerpt:
+      "We're thrilled to announce a new partnership that will bring our leadership programs to 12 additional schools, reaching nearly 2,000 more students in the coming year.",
+    author: { name: "RLG Team" },
+    publishedAt: "2026-02-18",
+    // Changed to local image
+    image: heroBg,
+  },
+  {
+    _id: "f5",
+    slug: "applications-open-2026-bootcamp",
+    category: "Announcements",
+    title: "Applications Open for Our 2026 Leadership Bootcamp",
+    excerpt:
+      "Our flagship two-week leadership bootcamp is back. Applications are now open for students aged 14–18 who are ready to step into their leadership potential.",
+    author: { name: "RLG Team" },
+    publishedAt: "2026-02-10",
+    // Changed to local image
+    image: heroImage,
+  },
+  {
+    _id: "f6",
+    slug: "rlg-clubs-reshaping-culture",
+    category: "Programs",
+    title: "How Our RLG Clubs Are Reshaping School Culture",
+    excerpt:
+      "Student-led clubs are at the heart of everything we do. Here's a look at how three schools have transformed their culture through our RLG Clubs program.",
+    author: { name: "Editorial Team" },
+    publishedAt: "2026-01-30",
+    // Changed to local image
+    image: hero,
+  },
+];
+
+const categories = [
+  "All",
+  "Leadership Tips",
+  "Events",
+  "Student Stories",
+  "Partnerships",
+  "Announcements",
+  "Programs",
+];
+
+const formatDate = (d) => {
+  if (!d) return "";
+  return new Date(d).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+export default function Blog() {
+  const { slug } = useParams();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [email, setEmail] = useState("");
-
-  const categories = [
-    { name: "All", icon: faBookOpen },
-    { name: "Leadership Tips", icon: faLightbulb },
-    { name: "Events", icon: faCalendarWeek },
-    { name: "Student Stories", icon: faUsers },
-    { name: "Partnerships", icon: faHandshake },
-    { name: "Announcements", icon: faBell },
-    { name: "Programs", icon: faBookOpen }
-  ];
+  const [category, setCategory] = useState("All");
 
   useEffect(() => {
-    fetchPosts();
+    (async () => {
+      setLoading(true);
+      try {
+        const r = await fetch(`${API_URL}/blogs?limit=50`);
+        const d = await r.json();
+        const items = (d.data?.blogs || []).filter((b) => b.status === "published");
+        setPosts(items.length ? items : fallbackPosts);
+      } catch {
+        setPosts(fallbackPosts);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
-  const fetchPosts = async () => {
-    try {
-      const response = await api.getBlogs();
-      // Filter only published posts
-      const publishedPosts = (response.data?.blogs || []).filter(post => post.status === 'published');
-      setPosts(publishedPosts);
-    } catch (error) {
-      console.error("Failed to fetch blogs:", error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Failed to load blog posts. Please refresh the page.',
-        confirmButtonColor: '#22c55e'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSubscribe = async (e) => {
-    e.preventDefault();
-    if (!email) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Email Required',
-        text: 'Please enter your email address.',
-        confirmButtonColor: '#22c55e'
-      });
-      return;
-    }
-    
-    Swal.fire({
-      icon: 'success',
-      title: 'Subscribed! 🎉',
-      text: `Thank you for subscribing with ${email}. You'll receive updates about new blog posts!`,
-      confirmButtonColor: '#22c55e',
-      timer: 3000
-    });
-    setEmail("");
-  };
-
-  const handleReadPost = (post) => {
-    window.location.href = `/blog/${post.slug}`;
-  };
-
-  const filteredPosts = posts.filter(post => {
-    const matchesSearch = post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          post.excerpt?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "All" || post.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+  const filtered = posts.filter((p) => {
+    const matchCat = category === "All" || p.category === category;
+    const matchSearch =
+      !searchTerm || (p.title && p.title.toLowerCase().includes(searchTerm.toLowerCase()));
+    return matchCat && matchSearch;
   });
 
-  // Empty State Component
-  const EmptyBlogState = () => (
-    <div className="rlg-empty-blog">
-      <FontAwesomeIcon icon={faBlog} size="4x" style={{ color: "#9ca3af", marginBottom: "1rem" }} />
-      <h3 style={{ color: "#14532d", marginBottom: "0.5rem" }}>No Blog Posts Yet</h3>
-      <p style={{ color: "#6b7280", marginBottom: "1rem" }}>Blog posts will appear here once published by the admin.</p>
-      <p style={{ color: "#9ca3af", fontSize: "0.85rem" }}>Check back soon for leadership insights and success stories!</p>
-    </div>
-  );
-
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <FontAwesomeIcon icon={faSpinner} spin size="3x" />
-        <p>Loading blog posts...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="rlg-blog-page pt-16">
+    <>
       <style>{`
-        .rlg-blog-page { font-family: 'Lato', 'Segoe UI', sans-serif; color: #1a1a1a; }
-        .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; gap: 20px; color: #22c55e; }
-        .rlg-container { max-width: 1200px; margin: 0 auto; padding: 0 1.25rem; }
-        .rlg-hero { position: relative; min-height: 40vh; display: flex; align-items: center; background: linear-gradient(135deg, #0a2a1a 0%, #14532d 100%); overflow: hidden; }
-        .rlg-hero::before { content:''; position:absolute; inset:0; background: url(${heroBg}) center/cover no-repeat; opacity:.12; }
-        .rlg-hero-content { position: relative; z-index: 2; padding: 4rem 0; text-align: center; }
-        .rlg-hero h1 { font-family:'Playfair Display',Georgia,serif; font-size:clamp(2.5rem,5vw,4rem); font-weight:800; color:#fff; margin-bottom:1rem; }
-        .rlg-hero p { color:rgba(255,255,255,.85); font-size:1.1rem; max-width:700px; margin:0 auto; line-height:1.7; }
-        .rlg-label { display:inline-flex;align-items:center;gap:.5rem; background:linear-gradient(135deg, #dcfce7, #f0fdf4); color:#14532d; padding:.5rem 1.25rem; border-radius:999px; font-size:.8rem; font-weight:700; margin-bottom:1rem; }
-        .rlg-section-title { font-family:'Playfair Display',Georgia,serif; font-size:clamp(1.8rem,3vw,2.6rem); font-weight:800; color:#111; margin-bottom:.75rem; }
-        .rlg-search-bar { background: #fff; padding: 1.5rem; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 2rem; }
-        .rlg-search-input { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-        .rlg-search-input input { flex: 1; padding: 0.8rem 1rem; border: 1px solid #e5e7eb; border-radius: 999px; outline: none; }
-        .rlg-search-btn { background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; border: none; padding: 0.8rem 1.5rem; border-radius: 999px; cursor: pointer; transition: all 0.3s ease; }
-        .rlg-search-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(34,197,94,0.3); }
-        .rlg-categories { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1rem 0; }
-        .rlg-cat-btn { background: #f0fdf4; border: 1px solid #e5e7eb; padding: 0.5rem 1rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
-        .rlg-cat-btn:hover, .rlg-cat-btn.active { background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; border-color: transparent; }
-        .rlg-blog-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin: 2rem 0; }
-        @media (max-width: 1024px) { .rlg-blog-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 768px) { .rlg-blog-grid { grid-template-columns: 1fr; } }
-        .rlg-blog-card { background: #fff; border-radius: 1rem; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: all 0.3s ease; cursor: pointer; }
-        .rlg-blog-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
-        .rlg-blog-content { padding: 1.5rem; }
-        .rlg-blog-meta { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; font-size: 0.75rem; color: #6b7280; }
-        .rlg-blog-category { display: inline-block; background: #dcfce7; color: #14532d; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
-        .rlg-blog-card h3 { font-size: 1.2rem; font-weight: 800; color: #14532d; margin-bottom: 0.75rem; line-height: 1.4; }
-        .rlg-blog-card p { color: #6b7280; font-size: 0.9rem; line-height: 1.6; margin-bottom: 1rem; }
-        .rlg-read-more { color: #22c55e; font-weight: 600; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.3rem; transition: all 0.3s ease; }
-        .rlg-read-more:hover { gap: 0.6rem; }
-        .rlg-sidebar-card { background: #fff; border-radius: 1rem; padding: 1.5rem; border: 1px solid #e5e7eb; margin-bottom: 1.5rem; }
-        .rlg-sidebar-card h3 { font-size: 1.1rem; font-weight: 800; color: #14532d; margin-bottom: 1rem; border-bottom: 2px solid #22c55e; display: inline-block; }
-        .rlg-empty-blog { text-align: center; padding: 4rem 2rem; background: #f0fdf4; border-radius: 1rem; margin: 2rem 0; }
-        @media (max-width: 768px) { .rlg-blog-sidebar { margin-top: 2rem; } }
+        /* ============================================================
+           BLOG PAGE — matches HTML exactly
+           ============================================================ */
+        :root{
+          --navy:#152B3A;
+          --navy-deep:#0F212D;
+          --green:#2F6B4F;
+          --green-deep:#234F3B;
+          --green-light:#8FC1A3;
+          --green-bright:#3F8C63;
+          --gold:#F2C94C;
+          --paper:#FAF8F4;
+          --paper-dim:#F1EDE3;
+          --line:#E4DFD3;
+          --text:#3A3F42;
+          --text-soft:#6B7178;
+        }
+
+        .bl-page{
+          background:var(--paper);
+          color:var(--text);
+          font-family:'Inter', system-ui, -apple-system, sans-serif;
+          font-size:16px;
+          line-height:1.5;
+        }
+        .bl-page *{ box-sizing:border-box; }
+        .bl-page img{ max-width:100%; display:block; }
+
+        .bl-container{
+          max-width:1280px;
+          margin:0 auto;
+          padding:0 48px;
+        }
+        .bl-section{
+          padding:100px 0;
+          position:relative;
+        }
+
+        .bl-eyebrow{
+          display:inline-flex;
+          align-items:center;
+          gap:8px;
+          font-size:12.5px;
+          font-weight:700;
+          letter-spacing:0.12em;
+          text-transform:uppercase;
+          color:var(--green);
+          margin-bottom:16px;
+        }
+        .bl-eyebrow .dot{
+          width:6px;
+          height:6px;
+          border-radius:50%;
+          background:var(--gold);
+        }
+
+        /* ---------- Page Hero ---------- */
+        .bl-hero{
+          position:relative;
+          background:linear-gradient(135deg, var(--navy) 0%, var(--green-deep) 100%);
+          padding:140px 0 100px;
+          overflow:hidden;
+          color:#fff;
+          text-align:center;
+        }
+        .bl-hero::before{
+          content:'';
+          position:absolute;
+          top:-40%; left:-10%;
+          width:70%; height:180%;
+          background:radial-gradient(ellipse, rgba(143,193,163,0.22), transparent 65%);
+          pointer-events:none;
+        }
+        .bl-hero::after{
+          content:'';
+          position:absolute;
+          bottom:-50%; right:-10%;
+          width:60%; height:160%;
+          background:radial-gradient(ellipse, rgba(242,201,76,0.12), transparent 65%);
+          pointer-events:none;
+        }
+        .bl-hero-inner{
+          position:relative;
+          z-index:1;
+          max-width:760px;
+          margin:0 auto;
+          padding:0 24px;
+        }
+        .bl-hero .bl-eyebrow{
+          color:var(--green-light);
+          justify-content:center;
+        }
+        .bl-hero h1{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-weight:600;
+          font-size:clamp(38px, 5vw, 60px);
+          line-height:1.1;
+          letter-spacing:-0.02em;
+          color:#fff;
+          margin-bottom:20px;
+        }
+        .bl-hero h1 .accent{ color:var(--gold); }
+        .bl-hero p{
+          font-size:clamp(16px, 1.3vw, 19px);
+          line-height:1.65;
+          color:rgba(255,255,255,0.82);
+          max-width:620px;
+          margin:0 auto;
+        }
+
+        /* ---------- Filter Bar ---------- */
+        .bl-filter-bar{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:20px;
+          flex-wrap:wrap;
+          margin-bottom:48px;
+          padding-bottom:32px;
+          border-bottom:1px solid var(--line);
+        }
+        .bl-category-tabs{
+          display:flex;
+          gap:10px;
+          flex-wrap:wrap;
+        }
+        .bl-category-tab{
+          display:inline-flex;
+          align-items:center;
+          gap:6px;
+          padding:9px 18px;
+          border-radius:100px;
+          border:1.5px solid var(--line);
+          background:#fff;
+          color:var(--green-deep);
+          font-size:13px;
+          font-weight:600;
+          font-family:'Inter', sans-serif;
+          cursor:pointer;
+          transition:all 0.2s ease;
+          white-space:nowrap;
+        }
+        .bl-category-tab:hover{
+          border-color:var(--green);
+          color:var(--green);
+        }
+        .bl-category-tab.active{
+          background:var(--green);
+          border-color:var(--green);
+          color:#fff;
+          box-shadow:0 4px 12px rgba(47,107,79,0.28);
+        }
+
+        .bl-search-box{
+          position:relative;
+          min-width:260px;
+          flex:1 1 260px;
+          max-width:340px;
+        }
+        .bl-search-box input{
+          width:100%;
+          padding:12px 18px 12px 44px;
+          border-radius:100px;
+          border:1.5px solid var(--line);
+          background:#fff;
+          font-size:14px;
+          font-family:'Inter', sans-serif;
+          color:var(--text);
+          outline:none;
+          transition:border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .bl-search-box input:focus{
+          border-color:var(--green);
+          box-shadow:0 0 0 3px rgba(47,107,79,0.12);
+        }
+        .bl-search-box input::placeholder{ color:#9AA0A6; }
+        .bl-search-box svg{
+          position:absolute;
+          left:16px; top:50%;
+          transform:translateY(-50%);
+          width:16px; height:16px;
+          stroke:var(--text-soft);
+          fill:none;
+          stroke-width:2;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+          pointer-events:none;
+        }
+
+        /* ---------- Blog Grid ---------- */
+        .bl-grid{
+          display:grid;
+          grid-template-columns:repeat(3, 1fr);
+          gap:28px;
+        }
+        .bl-card{
+          background:#fff;
+          border:1px solid var(--line);
+          border-radius:12px;
+          overflow:hidden;
+          transition:transform 0.25s ease, box-shadow 0.25s ease;
+          display:flex;
+          flex-direction:column;
+        }
+        .bl-card:hover{
+          transform:translateY(-6px);
+          box-shadow:0 24px 48px rgba(21,43,58,0.14);
+        }
+        .bl-card-img{
+          height:210px;
+          overflow:hidden;
+          position:relative;
+          background:linear-gradient(135deg, var(--navy), var(--green-deep));
+        }
+        .bl-card-img img{
+          width:100%; height:100%;
+          object-fit:cover;
+          transition:transform 0.5s ease;
+        }
+        .bl-card:hover .bl-card-img img{
+          transform:scale(1.06);
+        }
+        .bl-card-category{
+          position:absolute;
+          top:16px; left:16px;
+          background:rgba(15,33,45,0.85);
+          backdrop-filter:blur(8px);
+          color:#fff;
+          font-size:11px;
+          font-weight:700;
+          letter-spacing:0.08em;
+          text-transform:uppercase;
+          padding:6px 12px;
+          border-radius:100px;
+          z-index:2;
+        }
+        .bl-card-body{
+          padding:24px 24px 26px;
+          flex:1;
+          display:flex;
+          flex-direction:column;
+        }
+        .bl-card-meta{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:12px;
+          font-size:12.5px;
+          color:var(--text-soft);
+          margin-bottom:14px;
+        }
+        .bl-card-meta .date{
+          display:inline-flex;
+          align-items:center;
+          gap:5px;
+        }
+        .bl-card-meta .date svg{
+          width:13px; height:13px;
+          stroke:var(--text-soft);
+          fill:none;
+          stroke-width:1.8;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+        .bl-card h3{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-size:18px;
+          font-weight:600;
+          color:var(--navy);
+          line-height:1.4;
+          margin-bottom:12px;
+          transition:color 0.2s ease;
+        }
+        .bl-card:hover h3{
+          color:var(--green);
+        }
+        .bl-card .excerpt{
+          font-size:14px;
+          color:var(--text-soft);
+          line-height:1.65;
+          margin-bottom:20px;
+          flex:1;
+        }
+        .bl-card-footer{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:12px;
+          padding-top:16px;
+          border-top:1px solid var(--line);
+        }
+        .bl-author{
+          display:inline-flex;
+          align-items:center;
+          gap:6px;
+          font-size:12.5px;
+          color:var(--text-soft);
+        }
+        .bl-author svg{
+          width:13px; height:13px;
+          stroke:var(--text-soft);
+          fill:none;
+          stroke-width:1.8;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+        .bl-read-link{
+          display:inline-flex;
+          align-items:center;
+          gap:6px;
+          font-size:13px;
+          font-weight:700;
+          color:var(--green);
+          text-decoration:none;
+          transition:gap 0.2s ease, color 0.2s ease;
+        }
+        .bl-read-link:hover{
+          gap:10px;
+          color:var(--green-bright);
+        }
+        .bl-read-link svg{
+          width:13px; height:13px;
+          stroke:currentColor;
+          fill:none;
+          stroke-width:2.2;
+          stroke-linecap:round;
+          stroke-linejoin:round;
+        }
+
+        /* ---------- Featured (first card) ---------- */
+        .bl-grid .bl-card:first-child{
+          grid-column:span 2;
+          flex-direction:row;
+        }
+        .bl-grid .bl-card:first-child .bl-card-img{
+          width:50%;
+          height:auto;
+          min-height:340px;
+          flex-shrink:0;
+        }
+        .bl-grid .bl-card:first-child .bl-card-body{
+          width:50%;
+          padding:36px 36px 32px;
+        }
+        .bl-grid .bl-card:first-child h3{
+          font-size:24px;
+        }
+        .bl-grid .bl-card:first-child .excerpt{
+          font-size:15px;
+        }
+
+        /* ---------- Empty state ---------- */
+        .bl-empty{
+          text-align:center;
+          padding:80px 24px;
+          background:#fff;
+          border:1px dashed var(--line);
+          border-radius:16px;
+        }
+        .bl-empty svg{
+          width:48px; height:48px;
+          stroke:var(--green-light);
+          fill:none;
+          stroke-width:1.5;
+          margin-bottom:16px;
+        }
+        .bl-empty p{
+          font-size:15px;
+          color:var(--text-soft);
+        }
+
+        /* ---------- Pagination ---------- */
+        .bl-pagination{
+          display:flex;
+          justify-content:center;
+          gap:8px;
+          margin-top:56px;
+        }
+        .bl-pagination .bl-category-tab{
+          min-width:44px;
+          justify-content:center;
+        }
+
+        /* ---------- CTA ---------- */
+        .bl-cta{
+          background:linear-gradient(135deg, var(--green) 0%, var(--green-deep) 100%);
+          position:relative;
+          overflow:hidden;
+          padding:80px 0;
+        }
+        .bl-cta::before{
+          content:'';
+          position:absolute;
+          top:-60%; right:-10%;
+          width:60%; height:220%;
+          background:radial-gradient(ellipse, rgba(242,201,76,0.15), transparent 65%);
+          pointer-events:none;
+        }
+        .bl-cta-inner{
+          position:relative;
+          z-index:1;
+          text-align:center;
+          max-width:720px;
+          margin:0 auto;
+        }
+        .bl-cta h2{
+          font-family:'Source Serif 4', Georgia, serif;
+          font-weight:600;
+          font-size:clamp(30px, 3.5vw, 42px);
+          line-height:1.2;
+          letter-spacing:-0.02em;
+          color:#fff;
+          margin-bottom:18px;
+        }
+        .bl-cta p{
+          font-size:16.5px;
+          color:rgba(255,255,255,0.82);
+          line-height:1.7;
+          margin-bottom:36px;
+        }
+        .bl-cta-actions{
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          gap:16px;
+          flex-wrap:wrap;
+        }
+        .bl-btn-white{
+          display:inline-flex;
+          align-items:center;
+          gap:10px;
+          background:#fff;
+          color:var(--green-deep);
+          font-size:15.5px;
+          font-weight:700;
+          padding:16px 32px;
+          border-radius:6px;
+          border:none;
+          cursor:pointer;
+          text-decoration:none;
+          transition:transform 0.15s ease, box-shadow 0.2s ease;
+          box-shadow:0 8px 24px rgba(0,0,0,0.15);
+          font-family:'Inter', sans-serif;
+        }
+        .bl-btn-white:hover{
+          transform:translateY(-2px);
+          box-shadow:0 12px 32px rgba(0,0,0,0.22);
+        }
+        .bl-btn-outline-white{
+          display:inline-flex;
+          align-items:center;
+          gap:10px;
+          background:transparent;
+          color:#fff;
+          font-size:15.5px;
+          font-weight:600;
+          padding:16px 32px;
+          border-radius:6px;
+          border:1.5px solid rgba(255,255,255,0.4);
+          cursor:pointer;
+          text-decoration:none;
+          transition:background 0.2s ease, border-color 0.2s ease;
+          font-family:'Inter', sans-serif;
+        }
+        .bl-btn-outline-white:hover{
+          background:rgba(255,255,255,0.1);
+          border-color:rgba(255,255,255,0.7);
+        }
+
+        /* ---------- Responsive ---------- */
+        @media (max-width: 1024px){
+          .bl-container{ padding:0 32px; }
+          .bl-hero{ padding:110px 0 80px; }
+          .bl-grid{ grid-template-columns:repeat(2, 1fr); }
+          .bl-grid .bl-card:first-child{
+            grid-column:span 2;
+            flex-direction:column;
+          }
+          .bl-grid .bl-card:first-child .bl-card-img{
+            width:100%;
+            height:240px;
+            min-height:0;
+          }
+          .bl-grid .bl-card:first-child .bl-card-body{
+            width:100%;
+            padding:28px 26px 30px;
+          }
+          .bl-grid .bl-card:first-child h3{
+            font-size:20px;
+          }
+          .bl-filter-bar{
+            flex-direction:column;
+            align-items:stretch;
+          }
+          .bl-search-box{ max-width:100%; }
+        }
+        @media (max-width: 640px){
+          .bl-container{ padding:0 22px; }
+          .bl-section{ padding:72px 0; }
+          .bl-hero{ padding:90px 0 70px; }
+          .bl-grid{ grid-template-columns:1fr; }
+          .bl-grid .bl-card:first-child{ grid-column:span 1; }
+          .bl-category-tabs{ justify-content:center; }
+          .bl-cta-actions{ flex-direction:column; }
+          .bl-btn-white, .bl-btn-outline-white{ width:100%; justify-content:center; }
+        }
+        @media (prefers-reduced-motion: reduce){
+          .bl-page *{ transition:none !important; animation:none !important; }
+        }
       `}</style>
 
-      {/* HERO SECTION */}
-      <section className="rlg-hero">
-        <div className="rlg-hero-content">
-          <div className="rlg-container">
-            <h1>RLG Blog</h1>
-            <p>Stories & Insights from the Next Generation of Leaders</p>
-          </div>
-        </div>
-      </section>
+      <div className="bl-page">
 
-      {/* COMING SOON BANNER */}
-      <div className="rlg-container">
-        <div className="rlg-coming-soon" style={{ background: "linear-gradient(135deg, #fef3c7, #fde68a)", borderLeft: "4px solid #f59e0b", padding: "1rem 1.5rem", margin: "2rem auto", borderRadius: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
-          <p style={{ margin: 0, color: "#92400e", fontWeight: 500 }}>
-            <FontAwesomeIcon icon={faSpinner} style={{ marginRight: ".5rem", animation: "pulse 2s infinite" }} />
-            <strong>Admin Preview Mode:</strong> Blog posts will appear here once published from the backend.
-          </p>
-          <small style={{ color: "#b45309", fontSize: ".8rem" }}>📝 Waiting for admin approval</small>
-        </div>
-      </div>
-
-      <div className="rlg-container">
-        <div className="rlg-search-bar">
-          <div className="rlg-search-input">
-            <input 
-              type="text" 
-              placeholder="Search blog posts..." 
-              value={searchTerm} 
-              onChange={(e) => setSearchTerm(e.target.value)} 
-            />
-            <button className="rlg-search-btn"><FontAwesomeIcon icon={faSearch} /> Search</button>
+        {/* ============ PAGE HERO ============ */}
+        <section className="bl-hero">
+          <div className="bl-hero-inner">
+            <span className="bl-eyebrow"><span className="dot"></span> Insights &amp; Updates</span>
+            <h1>News &amp; <span className="accent">Blog</span></h1>
+            <p>
+              Stories, insights, and updates from our community — leadership tips,
+              events, student stories, and more.
+            </p>
           </div>
-          <div className="rlg-categories">
-            {categories.map((cat) => (
-              <button 
-                key={cat.name} 
-                className={`rlg-cat-btn ${selectedCategory === cat.name ? 'active' : ''}`} 
-                onClick={() => setSelectedCategory(cat.name)}
-              >
-                <FontAwesomeIcon icon={cat.icon} /> {cat.name}
-              </button>
-            ))}
-          </div>
-        </div>
+        </section>
 
-        {/* Blog Posts Grid or Empty State */}
-        {filteredPosts.length > 0 ? (
-          <div className="rlg-blog-grid">
-            {filteredPosts.map((post) => (
-              <div key={post._id} className="rlg-blog-card" onClick={() => handleReadPost(post)}>
-                <div className="rlg-blog-content">
-                  <div className="rlg-blog-meta">
-                    <span><FontAwesomeIcon icon={faCalendarAlt} /> {new Date(post.publishedAt || post.createdAt).toLocaleDateString()}</span>
-                    <span><FontAwesomeIcon icon={faClock} /> {post.readTime || 5} min read</span>
-                    <span><FontAwesomeIcon icon={faEye} /> {post.views || 0} views</span>
-                  </div>
-                  <span className="rlg-blog-category">{post.category}</span>
-                  <h3>{post.title}</h3>
-                  <p>{post.excerpt}</p>
-                  <div className="rlg-read-more">Read full post →</div>
-                </div>
+        {/* ============ BLOG LISTING ============ */}
+        <section className="bl-section">
+          <div className="bl-container">
+
+            {/* ---------- Filter Bar ---------- */}
+            <div className="bl-filter-bar">
+              <div className="bl-category-tabs">
+                {categories.map((c) => (
+                  <button
+                    key={c}
+                    className={`bl-category-tab ${category === c ? "active" : ""}`}
+                    onClick={() => setCategory(c)}
+                  >
+                    {c}
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
-        ) : (
-          <EmptyBlogState />
-        )}
 
-        <div className="rlg-blog-sidebar">
-          <div className="rlg-sidebar-card">
-            <h3><FontAwesomeIcon icon={faEnvelope} /> Subscribe</h3>
-            <p>Get new blog posts and RLG updates straight to your inbox.</p>
-            <form onSubmit={handleSubscribe}>
-              <input 
-                type="email" 
-                placeholder="Your email address" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-                style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '8px', border: '1px solid #e5e7eb' }} 
-                required
-              />
-              <button type="submit" className="rlg-search-btn" style={{ width: '100%' }}>Subscribe</button>
-            </form>
+              <div className="bl-search-box">
+                <svg viewBox="0 0 24 24">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="M21 21l-4.35-4.35" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search articles..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* ---------- Blog Grid ---------- */}
+            {loading ? (
+              <div className="bl-empty">
+                <p>Loading articles...</p>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="bl-empty">
+                <svg viewBox="0 0 24 24">
+                  <path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 016.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z" />
+                </svg>
+                <p>No articles found. Try a different category or search term.</p>
+              </div>
+            ) : (
+              <div className="bl-grid">
+                {filtered.map((b) => (
+                  <article key={b._id} className="bl-card">
+                    <div className="bl-card-img">
+                      {/* Using local images now */}
+                      <img src={b.image} alt={b.title} />
+                      <span className="bl-card-category">
+                        {b.category || "News"}
+                      </span>
+                    </div>
+                    <div className="bl-card-body">
+                      <div className="bl-card-meta">
+                        <span>By {b.author?.name || "RLG Team"}</span>
+                        <span className="date">
+                          <svg viewBox="0 0 24 24">
+                            <rect x="3" y="4" width="18" height="18" rx="2" />
+                            <path d="M16 2v4M8 2v4M3 10h18" />
+                          </svg>
+                          {formatDate(b.publishedAt || b.createdAt)}
+                        </span>
+                      </div>
+                      <h3>{b.title}</h3>
+                      <p className="excerpt">{b.excerpt}</p>
+                      <div className="bl-card-footer">
+                        <span className="bl-author">
+                          <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="8" r="3.5" />
+                            <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+                          </svg>
+                          {b.author?.name || "RLG Team"}
+                        </span>
+                        <Link to={`/blog/${b.slug}`} className="bl-read-link">
+                          Read Article
+                          <svg viewBox="0 0 24 24">
+                            <path d="M5 12h14M13 6l6 6-6 6" />
+                          </svg>
+                        </Link>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+
+            {/* ---------- Pagination ---------- */}
+            {!loading && filtered.length > 0 && (
+              <div className="bl-pagination">
+                <button className="bl-category-tab active">1</button>
+                <button className="bl-category-tab">2</button>
+                <button className="bl-category-tab">3</button>
+                <button className="bl-category-tab">→</button>
+              </div>
+            )}
+
           </div>
-        </div>
+        </section>
+
+        {/* ============ CTA ============ */}
+        <section className="bl-cta">
+          <div className="bl-container">
+            <div className="bl-cta-inner">
+              <h2>Never miss an update</h2>
+              <p>
+                Get stories of impact, leadership insights, and event announcements
+                delivered straight to your inbox.
+              </p>
+              <div className="bl-cta-actions">
+                <Link to="/contact" className="bl-btn-white">
+                  Subscribe to Newsletter
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                </Link>
+                <Link to="/getinvolved" className="bl-btn-outline-white">
+                  Get Involved
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
       </div>
-    </div>
+    </>
   );
-};
-
-export default Blog;
+}
