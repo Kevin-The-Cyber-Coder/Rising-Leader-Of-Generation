@@ -28,6 +28,7 @@ const donationRoutes = require('./routes/donation.routes');
 const testimonialRoutes = require('./routes/testimonial.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const uploadRoutes = require('./routes/upload.routes');
+const newsletterRoutes = require('./routes/newsletter.routes');
 
 const app = express();
 
@@ -120,6 +121,7 @@ const routeGroups = [
   { path: '/api/testimonials', routes: testimonialRoutes },
   { path: '/api/dashboard', routes: dashboardRoutes },
   { path: '/api/upload', routes: uploadRoutes },
+  { path: '/api/newsletter', routes: newsletterRoutes },
 ];
 
 routeGroups.forEach(({ path, routes }) => {
